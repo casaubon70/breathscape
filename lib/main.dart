@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:breathscape/features/breathing_session/presentation/breathing_session_page.dart';
+import 'package:flutter/material.dart';
 
 void main() {
   runApp(const BreathscapeApp());

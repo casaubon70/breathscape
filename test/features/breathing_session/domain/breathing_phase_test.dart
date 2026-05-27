@@ -1,5 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('BreathingPhase', () {
@@ -14,17 +14,20 @@ void main() {
     });
 
     test('all PhaseType values are distinct', () {
-      final values = PhaseType.values;
+      const values = PhaseType.values;
       expect(values.toSet().length, values.length);
     });
 
     test('PhaseType contains inhale, holdIn, exhale, holdOut', () {
-      expect(PhaseType.values, containsAll([
-        PhaseType.inhale,
-        PhaseType.holdIn,
-        PhaseType.exhale,
-        PhaseType.holdOut,
-      ]));
+      expect(
+        PhaseType.values,
+        containsAll([
+          PhaseType.inhale,
+          PhaseType.holdIn,
+          PhaseType.exhale,
+          PhaseType.holdOut,
+        ]),
+      );
     });
   });
 }

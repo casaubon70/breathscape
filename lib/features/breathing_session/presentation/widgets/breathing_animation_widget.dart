@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 class BreathingAnimationWidget extends StatelessWidget {
   const BreathingAnimationWidget({
-    super.key,
     required this.fillLevel,
     required this.isAnimating,
     required this.circleScale,
     required this.circleOpacity,
     required this.circleBottomScale,
     required this.circleBottomOpacity,
+    super.key,
   });
 
   final double fillLevel;

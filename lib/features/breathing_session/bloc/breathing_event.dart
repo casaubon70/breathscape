@@ -1,17 +1,34 @@
-abstract class BreathingEvent {
+import 'package:equatable/equatable.dart';
+
+sealed class BreathingEvent extends Equatable {
   const BreathingEvent();
+
+  @override
+  List<Object?> get props => [];
 }
 
-class PlayPressed extends BreathingEvent {}
+final class PlayPressed extends BreathingEvent {
+  const PlayPressed();
+}
 
-class PausePressed extends BreathingEvent {}
+final class PausePressed extends BreathingEvent {
+  const PausePressed();
+}
 
-class PhaseCompleted extends BreathingEvent {}
+final class ResetPressed extends BreathingEvent {
+  const ResetPressed();
+}
 
-class ResetPressed extends BreathingEvent {}
+final class PhaseCompleted extends BreathingEvent {
+  const PhaseCompleted();
+}
 
 /// Internes Event – wird ausschließlich vom Ticker im BreathingBloc gefeuert.
-class BreathingTickUpdated extends BreathingEvent {
+final class BreathingTickUpdated extends BreathingEvent {
   const BreathingTickUpdated(this.delta);
+
   final Duration delta;
+
+  @override
+  List<Object?> get props => [delta];
 }

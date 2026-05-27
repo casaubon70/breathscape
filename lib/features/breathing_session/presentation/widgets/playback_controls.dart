@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart';
+import 'package:flutter/material.dart';
 
 class PlaybackControls extends StatelessWidget {
   const PlaybackControls({
-    super.key,
     required this.status,
     required this.onPlay,
     required this.onPause,
     required this.onReset,
+    super.key,
   });
 
   final SessionStatus status;
@@ -20,7 +20,6 @@ class PlaybackControls extends StatelessWidget {
     final isPlaying = status == SessionStatus.playing;
     return Row(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         IconButton(
           iconSize: 72,

@@ -1,9 +1,9 @@
-import 'package:flutter/scheduler.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_event.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart';
-import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
+import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
   BreathingBloc({required this.pattern}) : super(const BreathingState()) {
@@ -44,10 +44,12 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
       _ticker!.start();
     }
 
-    emit(state.copyWith(
-      status: SessionStatus.playing,
-      currentPhase: pattern.phases[_phaseIndex].type,
-    ));
+    emit(
+      state.copyWith(
+        status: SessionStatus.playing,
+        currentPhase: pattern.phases[_phaseIndex].type,
+      ),
+    );
   }
 
   void _onPausePressed(PausePressed event, Emitter<BreathingState> emit) {
@@ -69,20 +71,25 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
   void _onPhaseCompleted(PhaseCompleted event, Emitter<BreathingState> emit) {
     if (state.status != SessionStatus.playing) return;
     final nextPhase = _nextPhaseType();
-    emit(state.copyWith(
-      currentPhase: nextPhase,
-      currentCycle: _nextCycle(),
-      fillLevel: _fillLevelForPhase(nextPhase, 0.0),
-      circleScale: _circleScaleForPhase(nextPhase, 0.0),
-      circleOpacity: _circleOpacityForPhase(nextPhase, 0.0),
-      circleBottomScale: _circleBottomScaleForPhase(nextPhase, 0.0),
-      circleBottomOpacity: _circleBottomOpacityForPhase(nextPhase, 0.0),
-    ));
+    emit(
+      state.copyWith(
+        currentPhase: nextPhase,
+        currentCycle: _nextCycle(),
+        fillLevel: _fillLevelForPhase(nextPhase, 0),
+        circleScale: _circleScaleForPhase(nextPhase, 0),
+        circleOpacity: _circleOpacityForPhase(nextPhase, 0),
+        circleBottomScale: _circleBottomScaleForPhase(nextPhase, 0),
+        circleBottomOpacity: _circleBottomOpacityForPhase(nextPhase, 0),
+      ),
+    );
     _phaseIndex = (_phaseIndex + 1) % pattern.phases.length;
   }
 
   // Ticker-Event – verarbeitet delta und wechselt Phase direkt (kein add()).
-  void _onTickUpdated(BreathingTickUpdated event, Emitter<BreathingState> emit) {
+  void _onTickUpdated(
+    BreathingTickUpdated event,
+    Emitter<BreathingState> emit,
+  ) {
     if (state.status != SessionStatus.playing) return;
 
     _phaseAccumulated += event.delta;
@@ -95,27 +102,35 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
       final nextCycle = nextPhase == PhaseType.inhale
           ? state.currentCycle + 1
           : state.currentCycle;
-      emit(state.copyWith(
-        currentPhase: nextPhase,
-        currentCycle: nextCycle,
-        fillLevel: _fillLevelForPhase(nextPhase, 0.0),
-        circleScale: _circleScaleForPhase(nextPhase, 0.0),
-        circleOpacity: _circleOpacityForPhase(nextPhase, 0.0),
-        circleBottomScale: _circleBottomScaleForPhase(nextPhase, 0.0),
-        circleBottomOpacity: _circleBottomOpacityForPhase(nextPhase, 0.0),
-      ));
+      emit(
+        state.copyWith(
+          currentPhase: nextPhase,
+          currentCycle: nextCycle,
+          fillLevel: _fillLevelForPhase(nextPhase, 0),
+          circleScale: _circleScaleForPhase(nextPhase, 0),
+          circleOpacity: _circleOpacityForPhase(nextPhase, 0),
+          circleBottomScale: _circleBottomScaleForPhase(nextPhase, 0),
+          circleBottomOpacity: _circleBottomOpacityForPhase(nextPhase, 0),
+        ),
+      );
     } else {
       final progress =
           _phaseAccumulated.inMicroseconds / phaseDuration.inMicroseconds;
-      emit(state.copyWith(
-        fillLevel: _fillLevelForPhase(state.currentPhase, progress),
-        circleScale: _circleScaleForPhase(state.currentPhase, progress),
-        circleOpacity: _circleOpacityForPhase(state.currentPhase, progress),
-        circleBottomScale:
-            _circleBottomScaleForPhase(state.currentPhase, progress),
-        circleBottomOpacity:
-            _circleBottomOpacityForPhase(state.currentPhase, progress),
-      ));
+      emit(
+        state.copyWith(
+          fillLevel: _fillLevelForPhase(state.currentPhase, progress),
+          circleScale: _circleScaleForPhase(state.currentPhase, progress),
+          circleOpacity: _circleOpacityForPhase(state.currentPhase, progress),
+          circleBottomScale: _circleBottomScaleForPhase(
+            state.currentPhase,
+            progress,
+          ),
+          circleBottomOpacity: _circleBottomOpacityForPhase(
+            state.currentPhase,
+            progress,
+          ),
+        ),
+      );
     }
   }
 

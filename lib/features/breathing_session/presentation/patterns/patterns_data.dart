@@ -1,5 +1,5 @@
-import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
+import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
 
 abstract class PatternsData {
   static const boxBreathing = BreathingPattern(

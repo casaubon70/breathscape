@@ -1,9 +1,9 @@
-import 'package:equatable/equatable.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
+import 'package:equatable/equatable.dart';
 
 enum SessionStatus { idle, playing, paused }
 
-class BreathingState extends Equatable {
+final class BreathingState extends Equatable {
   const BreathingState({
     this.status = SessionStatus.idle,
     this.currentPhase = PhaseType.inhale,
@@ -48,13 +48,13 @@ class BreathingState extends Equatable {
 
   @override
   List<Object> get props => [
-        status,
-        currentPhase,
-        fillLevel,
-        currentCycle,
-        circleScale,
-        circleOpacity,
-        circleBottomScale,
-        circleBottomOpacity,
-      ];
+    status,
+    currentPhase,
+    fillLevel,
+    currentCycle,
+    circleScale,
+    circleOpacity,
+    circleBottomScale,
+    circleBottomOpacity,
+  ];
 }

@@ -1,15 +1,15 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_bloc.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_event.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
 import 'package:breathscape/features/breathing_session/presentation/patterns/patterns_data.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  final pattern = PatternsData.boxBreathing; // 4s pro Phase
+  const pattern = PatternsData.boxBreathing; // 4s pro Phase
 
   group('BreathingBloc – Play/Pause (Scheibe 2)', () {
     late BreathingBloc bloc;
@@ -27,82 +27,102 @@ void main() {
     blocTest<BreathingBloc, BreathingState>(
       'PlayPressed from idle → playing',
       build: () => BreathingBloc(pattern: pattern),
-      act: (bloc) => bloc.add(PlayPressed()),
+      act: (bloc) => bloc.add(const PlayPressed()),
       expect: () => [
-        isA<BreathingState>()
-            .having((s) => s.status, 'status', SessionStatus.playing),
+        isA<BreathingState>().having(
+          (s) => s.status,
+          'status',
+          SessionStatus.playing,
+        ),
       ],
     );
 
     blocTest<BreathingBloc, BreathingState>(
       'PausePressed while playing → paused',
       build: () => BreathingBloc(pattern: pattern),
-      act: (bloc) {
-        bloc.add(PlayPressed());
-        bloc.add(PausePressed());
-      },
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const PausePressed()),
       expect: () => [
-        isA<BreathingState>()
-            .having((s) => s.status, 'status', SessionStatus.playing),
-        isA<BreathingState>()
-            .having((s) => s.status, 'status', SessionStatus.paused),
+        isA<BreathingState>().having(
+          (s) => s.status,
+          'status',
+          SessionStatus.playing,
+        ),
+        isA<BreathingState>().having(
+          (s) => s.status,
+          'status',
+          SessionStatus.paused,
+        ),
       ],
     );
 
     blocTest<BreathingBloc, BreathingState>(
       'PlayPressed from paused → playing',
       build: () => BreathingBloc(pattern: pattern),
-      act: (bloc) {
-        bloc.add(PlayPressed());
-        bloc.add(PausePressed());
-        bloc.add(PlayPressed());
-      },
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const PausePressed())
+        ..add(const PlayPressed()),
       skip: 2,
       expect: () => [
-        isA<BreathingState>()
-            .having((s) => s.status, 'status', SessionStatus.playing),
+        isA<BreathingState>().having(
+          (s) => s.status,
+          'status',
+          SessionStatus.playing,
+        ),
       ],
     );
 
     blocTest<BreathingBloc, BreathingState>(
       'PausePressed while idle → no state change',
       build: () => BreathingBloc(pattern: pattern),
-      act: (bloc) => bloc.add(PausePressed()),
-      expect: () => [],
+      act: (bloc) => bloc.add(const PausePressed()),
+      expect: () => <BreathingState>[],
     );
 
     blocTest<BreathingBloc, BreathingState>(
       'PhaseCompleted advances phase: inhale → holdIn',
       build: () => BreathingBloc(pattern: pattern),
-      act: (bloc) {
-        bloc.add(PlayPressed());
-        bloc.add(PhaseCompleted());
-      },
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const PhaseCompleted()),
       skip: 1,
       expect: () => [
-        isA<BreathingState>()
-            .having((s) => s.currentPhase, 'phase', PhaseType.holdIn),
+        isA<BreathingState>().having(
+          (s) => s.currentPhase,
+          'phase',
+          PhaseType.holdIn,
+        ),
       ],
     );
 
     blocTest<BreathingBloc, BreathingState>(
       'PhaseCompleted cycles through all four phases',
       build: () => BreathingBloc(pattern: pattern),
-      act: (bloc) {
-        bloc.add(PlayPressed());
-        bloc.add(PhaseCompleted()); // holdIn
-        bloc.add(PhaseCompleted()); // exhale
-        bloc.add(PhaseCompleted()); // holdOut
-        bloc.add(PhaseCompleted()); // inhale again
-      },
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const PhaseCompleted()) // holdIn
+        ..add(const PhaseCompleted()) // exhale
+        ..add(const PhaseCompleted()) // holdOut
+        ..add(const PhaseCompleted()), // inhale again
       skip: 1,
       expect: () => [
-        isA<BreathingState>()
-            .having((s) => s.currentPhase, 'phase', PhaseType.holdIn),
-        isA<BreathingState>()
-            .having((s) => s.currentPhase, 'phase', PhaseType.exhale),
-        isA<BreathingState>()
-            .having((s) => s.currentPhase, 'phase', PhaseType.holdOut),
+        isA<BreathingState>().having(
+          (s) => s.currentPhase,
+          'phase',
+          PhaseType.holdIn,
+        ),
+        isA<BreathingState>().having(
+          (s) => s.currentPhase,
+          'phase',
+          PhaseType.exhale,
+        ),
+        isA<BreathingState>().having(
+          (s) => s.currentPhase,
+          'phase',
+          PhaseType.holdOut,
+        ),
         isA<BreathingState>()
             .having((s) => s.currentPhase, 'phase', PhaseType.inhale)
             .having((s) => s.currentCycle, 'cycle', 2),
@@ -112,13 +132,12 @@ void main() {
     blocTest<BreathingBloc, BreathingState>(
       'PhaseCompleted while paused → no state change',
       build: () => BreathingBloc(pattern: pattern),
-      act: (bloc) {
-        bloc.add(PlayPressed());
-        bloc.add(PausePressed());
-        bloc.add(PhaseCompleted());
-      },
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const PausePressed())
+        ..add(const PhaseCompleted()),
       skip: 2,
-      expect: () => [],
+      expect: () => <BreathingState>[],
     );
   });
 
@@ -126,10 +145,9 @@ void main() {
     blocTest<BreathingBloc, BreathingState>(
       'Tick mit halbem Delta → fillLevel 0.5 (Inhale-Phase)',
       build: () => BreathingBloc(pattern: pattern),
-      act: (bloc) {
-        bloc.add(PlayPressed());
-        bloc.add(const BreathingTickUpdated(Duration(seconds: 2)));
-      },
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const BreathingTickUpdated(Duration(seconds: 2))),
       skip: 1,
       expect: () => [
         isA<BreathingState>()
@@ -141,10 +159,9 @@ void main() {
     blocTest<BreathingBloc, BreathingState>(
       'Tick mit vollem Delta → Phase wechselt zu holdIn, fillLevel 1.0',
       build: () => BreathingBloc(pattern: pattern),
-      act: (bloc) {
-        bloc.add(PlayPressed());
-        bloc.add(const BreathingTickUpdated(Duration(seconds: 4)));
-      },
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))),
       skip: 1,
       expect: () => [
         isA<BreathingState>()
@@ -156,11 +173,12 @@ void main() {
     blocTest<BreathingBloc, BreathingState>(
       'holdIn-Phase: fillLevel bleibt 1.0, circleScale nimmt ab',
       build: () => BreathingBloc(pattern: pattern),
-      act: (bloc) {
-        bloc.add(PlayPressed());
-        bloc.add(const BreathingTickUpdated(Duration(seconds: 4))); // → holdIn
-        bloc.add(const BreathingTickUpdated(Duration(seconds: 2))); // 50% holdIn
-      },
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → holdIn
+        ..add(
+          const BreathingTickUpdated(Duration(seconds: 2)),
+        ), // 50% holdIn
       skip: 1,
       expect: () => [
         isA<BreathingState>()
@@ -177,16 +195,20 @@ void main() {
     blocTest<BreathingBloc, BreathingState>(
       'exhale-Phase: fillLevel fällt von 1.0 auf 0.0',
       build: () => BreathingBloc(pattern: pattern),
-      act: (bloc) {
-        bloc.add(PlayPressed());
-        bloc.add(const BreathingTickUpdated(Duration(seconds: 4))); // → holdIn
-        bloc.add(const BreathingTickUpdated(Duration(seconds: 4))); // → exhale
-        bloc.add(const BreathingTickUpdated(Duration(seconds: 2))); // 50% exhale
-      },
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → holdIn
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale
+        ..add(
+          const BreathingTickUpdated(Duration(seconds: 2)),
+        ), // 50% exhale
       skip: 1,
       expect: () => [
-        isA<BreathingState>()
-            .having((s) => s.currentPhase, 'phase', PhaseType.holdIn),
+        isA<BreathingState>().having(
+          (s) => s.currentPhase,
+          'phase',
+          PhaseType.holdIn,
+        ),
         isA<BreathingState>()
             .having((s) => s.currentPhase, 'phase', PhaseType.exhale)
             .having((s) => s.fillLevel, 'fillLevel', 1.0),
@@ -199,21 +221,29 @@ void main() {
     blocTest<BreathingBloc, BreathingState>(
       'ein vollständiger Zyklus → currentCycle 2, zurück in inhale',
       build: () => BreathingBloc(pattern: pattern),
-      act: (bloc) {
-        bloc.add(PlayPressed());
-        bloc.add(const BreathingTickUpdated(Duration(seconds: 4))); // → holdIn
-        bloc.add(const BreathingTickUpdated(Duration(seconds: 4))); // → exhale
-        bloc.add(const BreathingTickUpdated(Duration(seconds: 4))); // → holdOut
-        bloc.add(const BreathingTickUpdated(Duration(seconds: 4))); // → inhale
-      },
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → holdIn
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → holdOut
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))), // → inhale
       skip: 1,
       expect: () => [
-        isA<BreathingState>()
-            .having((s) => s.currentPhase, 'phase', PhaseType.holdIn),
-        isA<BreathingState>()
-            .having((s) => s.currentPhase, 'phase', PhaseType.exhale),
-        isA<BreathingState>()
-            .having((s) => s.currentPhase, 'phase', PhaseType.holdOut),
+        isA<BreathingState>().having(
+          (s) => s.currentPhase,
+          'phase',
+          PhaseType.holdIn,
+        ),
+        isA<BreathingState>().having(
+          (s) => s.currentPhase,
+          'phase',
+          PhaseType.exhale,
+        ),
+        isA<BreathingState>().having(
+          (s) => s.currentPhase,
+          'phase',
+          PhaseType.holdOut,
+        ),
         isA<BreathingState>()
             .having((s) => s.currentPhase, 'phase', PhaseType.inhale)
             .having((s) => s.currentCycle, 'cycle', 2),
@@ -223,23 +253,21 @@ void main() {
     blocTest<BreathingBloc, BreathingState>(
       'Tick während Pause → kein State-Update',
       build: () => BreathingBloc(pattern: pattern),
-      act: (bloc) {
-        bloc.add(PlayPressed());
-        bloc.add(PausePressed());
-        bloc.add(const BreathingTickUpdated(Duration(seconds: 2)));
-      },
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const PausePressed())
+        ..add(const BreathingTickUpdated(Duration(seconds: 2))),
       skip: 2,
-      expect: () => [],
+      expect: () => <BreathingState>[],
     );
 
     blocTest<BreathingBloc, BreathingState>(
       'ResetPressed → Initialzustand, Zyklus 1, Phase inhale',
       build: () => BreathingBloc(pattern: pattern),
-      act: (bloc) {
-        bloc.add(PlayPressed());
-        bloc.add(const BreathingTickUpdated(Duration(seconds: 4))); // → holdIn
-        bloc.add(ResetPressed());
-      },
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → holdIn
+        ..add(const ResetPressed()),
       skip: 2,
       expect: () => [
         isA<BreathingState>()

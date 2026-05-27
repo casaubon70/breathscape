@@ -1,6 +1,6 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
+import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('BreathingPattern', () {
@@ -8,10 +8,22 @@ void main() {
       const pattern = BreathingPattern(
         name: 'Box Breathing',
         phases: [
-          BreathingPhase(type: PhaseType.inhale, duration: Duration(seconds: 4)),
-          BreathingPhase(type: PhaseType.holdIn, duration: Duration(seconds: 4)),
-          BreathingPhase(type: PhaseType.exhale, duration: Duration(seconds: 4)),
-          BreathingPhase(type: PhaseType.holdOut, duration: Duration(seconds: 4)),
+          BreathingPhase(
+            type: PhaseType.inhale,
+            duration: Duration(seconds: 4),
+          ),
+          BreathingPhase(
+            type: PhaseType.holdIn,
+            duration: Duration(seconds: 4),
+          ),
+          BreathingPhase(
+            type: PhaseType.exhale,
+            duration: Duration(seconds: 4),
+          ),
+          BreathingPhase(
+            type: PhaseType.holdOut,
+            duration: Duration(seconds: 4),
+          ),
         ],
       );
 
@@ -23,9 +35,18 @@ void main() {
       const pattern = BreathingPattern(
         name: '4-7-8',
         phases: [
-          BreathingPhase(type: PhaseType.inhale, duration: Duration(seconds: 4)),
-          BreathingPhase(type: PhaseType.holdIn, duration: Duration(seconds: 7)),
-          BreathingPhase(type: PhaseType.exhale, duration: Duration(seconds: 8)),
+          BreathingPhase(
+            type: PhaseType.inhale,
+            duration: Duration(seconds: 4),
+          ),
+          BreathingPhase(
+            type: PhaseType.holdIn,
+            duration: Duration(seconds: 7),
+          ),
+          BreathingPhase(
+            type: PhaseType.exhale,
+            duration: Duration(seconds: 8),
+          ),
         ],
       );
 
