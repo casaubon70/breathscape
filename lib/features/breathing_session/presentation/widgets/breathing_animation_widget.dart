@@ -8,6 +8,8 @@ class BreathingAnimationWidget extends StatelessWidget {
     required this.circleOpacity,
     required this.circleBottomScale,
     required this.circleBottomOpacity,
+    this.showTopCircle = true,
+    this.showBottomCircle = true,
     super.key,
   });
 
@@ -17,13 +19,18 @@ class BreathingAnimationWidget extends StatelessWidget {
   final double circleOpacity;
   final double circleBottomScale;
   final double circleBottomOpacity;
+  final bool showTopCircle;
+  final bool showBottomCircle;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildCircle(circleScale, circleOpacity),
+        Opacity(
+          opacity: showTopCircle ? 1.0 : 0.0,
+          child: _buildCircle(circleScale, circleOpacity),
+        ),
         const SizedBox(height: 16),
         SizedBox(
           height: 320,
@@ -59,7 +66,10 @@ class BreathingAnimationWidget extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        _buildCircle(circleBottomScale, circleBottomOpacity),
+        Opacity(
+          opacity: showBottomCircle ? 1.0 : 0.0,
+          child: _buildCircle(circleBottomScale, circleBottomOpacity),
+        ),
       ],
     );
   }

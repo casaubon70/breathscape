@@ -2,14 +2,22 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_bloc.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_event.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart';
+import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
-import 'package:breathscape/features/breathing_session/presentation/patterns/patterns_data.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const pattern = PatternsData.boxBreathing; // 4s pro Phase
+  const pattern = BreathingPattern(
+    name: 'Box Breathing',
+    phases: [
+      BreathingPhase(type: PhaseType.inhale, duration: Duration(seconds: 4)),
+      BreathingPhase(type: PhaseType.holdIn, duration: Duration(seconds: 4)),
+      BreathingPhase(type: PhaseType.exhale, duration: Duration(seconds: 4)),
+      BreathingPhase(type: PhaseType.holdOut, duration: Duration(seconds: 4)),
+    ],
+  );
 
   group('BreathingBloc – Play/Pause (Scheibe 2)', () {
     late BreathingBloc bloc;
@@ -176,9 +184,7 @@ void main() {
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → holdIn
-        ..add(
-          const BreathingTickUpdated(Duration(seconds: 2)),
-        ), // 50% holdIn
+        ..add(const BreathingTickUpdated(Duration(seconds: 2))), // 50% holdIn
       skip: 1,
       expect: () => [
         isA<BreathingState>()
@@ -199,9 +205,7 @@ void main() {
         ..add(const PlayPressed())
         ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → holdIn
         ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale
-        ..add(
-          const BreathingTickUpdated(Duration(seconds: 2)),
-        ), // 50% exhale
+        ..add(const BreathingTickUpdated(Duration(seconds: 2))), // 50% exhale
       skip: 1,
       expect: () => [
         isA<BreathingState>().having(

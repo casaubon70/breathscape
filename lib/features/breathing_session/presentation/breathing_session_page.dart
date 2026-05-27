@@ -1,27 +1,60 @@
 import 'package:breathscape/features/breathing_session/bloc/breathing_bloc.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_event.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart';
+import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
-import 'package:breathscape/features/breathing_session/presentation/patterns/patterns_data.dart';
+import 'package:breathscape/features/breathing_session/domain/patterns_repository.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/breathing_animation_widget.dart';
+import 'package:breathscape/features/breathing_session/presentation/widgets/pattern_dropdown.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/playback_controls.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class BreathingSessionPage extends StatelessWidget {
-  const BreathingSessionPage({super.key});
+class BreathingSessionPage extends StatefulWidget {
+  const BreathingSessionPage({super.key, this.patternsLoader});
+
+  final Future<List<BreathingPattern>> Function()? patternsLoader;
+
+  @override
+  State<BreathingSessionPage> createState() => _BreathingSessionPageState();
+}
+
+class _BreathingSessionPageState extends State<BreathingSessionPage> {
+  late final Future<List<BreathingPattern>> _patternsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _patternsFuture = (widget.patternsLoader ?? PatternsRepository.load)();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => BreathingBloc(pattern: PatternsData.boxBreathing),
-      child: const _BreathingSessionView(),
+    return FutureBuilder<List<BreathingPattern>>(
+      future: _patternsFuture,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Scaffold(
+            backgroundColor: Color(0xFF0D1B2A),
+            body: Center(
+              child: CircularProgressIndicator(color: Colors.white38),
+            ),
+          );
+        }
+        final patterns = snapshot.data!;
+        return BlocProvider(
+          create: (_) => BreathingBloc(pattern: patterns.first),
+          child: _BreathingSessionView(patterns: patterns),
+        );
+      },
     );
   }
 }
 
 class _BreathingSessionView extends StatelessWidget {
-  const _BreathingSessionView();
+  const _BreathingSessionView({required this.patterns});
+
+  final List<BreathingPattern> patterns;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +63,7 @@ class _BreathingSessionView extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
+            PatternDropdown(patterns: patterns),
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) => SingleChildScrollView(
@@ -53,7 +87,7 @@ class _BreathingSessionView extends StatelessWidget {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Cycle ${state.currentCycle}',
+                                '${state.phaseSecondsRemaining}s',
                                 style: const TextStyle(
                                   color: Colors.white38,
                                   fontSize: 14,
@@ -71,6 +105,10 @@ class _BreathingSessionView extends StatelessWidget {
                                   circleBottomScale: state.circleBottomScale,
                                   circleBottomOpacity:
                                       state.circleBottomOpacity,
+                                  showTopCircle: state.selectedPattern.phases
+                                      .any((p) => p.type == PhaseType.holdIn),
+                                  showBottomCircle: state.selectedPattern.phases
+                                      .any((p) => p.type == PhaseType.holdOut),
                                 ),
                               ),
                             ],

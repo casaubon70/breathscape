@@ -1,3 +1,4 @@
+import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
 import 'package:equatable/equatable.dart';
 
 sealed class BreathingEvent extends Equatable {
@@ -21,6 +22,15 @@ final class ResetPressed extends BreathingEvent {
 
 final class PhaseCompleted extends BreathingEvent {
   const PhaseCompleted();
+}
+
+final class PatternSelected extends BreathingEvent {
+  const PatternSelected(this.pattern);
+
+  final BreathingPattern pattern;
+
+  @override
+  List<Object?> get props => [pattern];
 }
 
 /// Internes Event – wird ausschließlich vom Ticker im BreathingBloc gefeuert.

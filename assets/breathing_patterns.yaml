@@ -1,0 +1,27 @@
+patterns:
+  - name: Box Breathing
+    phases:
+      - type: inhale
+        seconds: 4
+      - type: hold_in
+        seconds: 4
+      - type: exhale
+        seconds: 4
+      - type: hold_out
+        seconds: 4
+
+  - name: 4-7-8 Breathing
+    phases:
+      - type: inhale
+        seconds: 4
+      - type: hold_in
+        seconds: 7
+      - type: exhale
+        seconds: 8
+
+  - name: Coherent Breathing
+    phases:
+      - type: inhale
+        seconds: 5
+      - type: exhale
+        seconds: 5
