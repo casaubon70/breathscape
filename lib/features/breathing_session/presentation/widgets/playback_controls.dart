@@ -7,20 +7,35 @@ class PlaybackControls extends StatelessWidget {
     required this.status,
     required this.onPlay,
     required this.onPause,
+    required this.onReset,
   });
 
   final SessionStatus status;
   final VoidCallback onPlay;
   final VoidCallback onPause;
+  final VoidCallback onReset;
 
   @override
   Widget build(BuildContext context) {
     final isPlaying = status == SessionStatus.playing;
-    return IconButton(
-      iconSize: 72,
-      color: Colors.white,
-      icon: Icon(isPlaying ? Icons.pause_circle : Icons.play_circle),
-      onPressed: isPlaying ? onPause : onPlay,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        IconButton(
+          iconSize: 72,
+          color: Colors.white,
+          icon: Icon(isPlaying ? Icons.pause_circle : Icons.play_circle),
+          onPressed: isPlaying ? onPause : onPlay,
+        ),
+        const SizedBox(width: 8),
+        IconButton(
+          iconSize: 32,
+          color: Colors.white38,
+          icon: const Icon(Icons.refresh),
+          onPressed: onReset,
+        ),
+      ],
     );
   }
 }

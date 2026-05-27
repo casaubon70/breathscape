@@ -231,5 +231,23 @@ void main() {
       skip: 2,
       expect: () => [],
     );
+
+    blocTest<BreathingBloc, BreathingState>(
+      'ResetPressed → Initialzustand, Zyklus 1, Phase inhale',
+      build: () => BreathingBloc(pattern: pattern),
+      act: (bloc) {
+        bloc.add(PlayPressed());
+        bloc.add(const BreathingTickUpdated(Duration(seconds: 4))); // → holdIn
+        bloc.add(ResetPressed());
+      },
+      skip: 2,
+      expect: () => [
+        isA<BreathingState>()
+            .having((s) => s.status, 'status', SessionStatus.idle)
+            .having((s) => s.currentPhase, 'phase', PhaseType.inhale)
+            .having((s) => s.fillLevel, 'fillLevel', 0.0)
+            .having((s) => s.currentCycle, 'cycle', 1),
+      ],
+    );
   });
 }

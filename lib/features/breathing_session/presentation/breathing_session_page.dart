@@ -90,6 +90,8 @@ class _BreathingSessionView extends StatelessWidget {
                         context.read<BreathingBloc>().add(PlayPressed()),
                     onPause: () =>
                         context.read<BreathingBloc>().add(PausePressed()),
+                    onReset: () =>
+                        context.read<BreathingBloc>().add(ResetPressed()),
                   ),
                 );
               },

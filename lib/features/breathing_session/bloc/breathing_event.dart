@@ -8,6 +8,8 @@ class PausePressed extends BreathingEvent {}
 
 class PhaseCompleted extends BreathingEvent {}
 
+class ResetPressed extends BreathingEvent {}
+
 /// Internes Event – wird ausschließlich vom Ticker im BreathingBloc gefeuert.
 class BreathingTickUpdated extends BreathingEvent {
   const BreathingTickUpdated(this.delta);

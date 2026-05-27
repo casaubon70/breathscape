@@ -9,6 +9,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
   BreathingBloc({required this.pattern}) : super(const BreathingState()) {
     on<PlayPressed>(_onPlayPressed);
     on<PausePressed>(_onPausePressed);
+    on<ResetPressed>(_onResetPressed);
     on<PhaseCompleted>(_onPhaseCompleted);
     on<BreathingTickUpdated>(_onTickUpdated);
   }
@@ -54,6 +55,14 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     _ticker?.stop();
     _lastTickElapsed = Duration.zero;
     emit(state.copyWith(status: SessionStatus.paused));
+  }
+
+  void _onResetPressed(ResetPressed event, Emitter<BreathingState> emit) {
+    _ticker?.stop();
+    _phaseIndex = 0;
+    _phaseAccumulated = Duration.zero;
+    _lastTickElapsed = Duration.zero;
+    emit(const BreathingState());
   }
 
   // Öffentliches Event – für externe Auslösung und Scheibe-2-Tests.
