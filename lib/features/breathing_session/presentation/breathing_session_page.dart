@@ -72,58 +72,57 @@ class _BreathingSessionView extends StatelessWidget {
             PatternDropdown(patterns: patterns),
             Expanded(
               child: LayoutBuilder(
-                builder: (context, constraints) => SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minHeight: constraints.maxHeight,
+                builder: (context, constraints) {
+                  // 0.40 accounts for circles (each 37.5% of bar height)
+                  // and labels above. Total widget H ≈ barH × 1.75 + 32 px.
+                  final animHeight =
+                      (constraints.maxHeight * 0.40).clamp(130.0, 300.0);
+                  return Center(
+                    child: BlocBuilder<BreathingBloc, BreathingState>(
+                      builder: (context, state) {
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _phaseLabel(state.status, state.currentPhase),
+                              style: typography.phaseLabel,
+                            ),
+                            SizedBox(height: spacing.s),
+                            Text(
+                              '${state.phaseSecondsRemaining}s',
+                              style: typography.countdown,
+                            ),
+                            SizedBox(height: spacing.l),
+                            SizedBox(
+                              width: animHeight * 0.375,
+                              child: BreathingAnimationWidget(
+                                height: animHeight,
+                                fillLevel: state.fillLevel,
+                                isAnimating:
+                                    state.status == SessionStatus.playing,
+                                circleScale: state.circleScale,
+                                circleOpacity: state.circleOpacity,
+                                circleBottomScale: state.circleBottomScale,
+                                circleBottomOpacity: state.circleBottomOpacity,
+                                showTopCircle: state.selectedPattern.phases
+                                    .any((p) => p.type == PhaseType.holdIn),
+                                showBottomCircle: state.selectedPattern.phases
+                                    .any((p) => p.type == PhaseType.holdOut),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
-                    child: Center(
-                      child: BlocBuilder<BreathingBloc, BreathingState>(
-                        builder: (context, state) {
-                          return Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _phaseLabel(state.status, state.currentPhase),
-                                style: typography.phaseLabel,
-                              ),
-                              SizedBox(height: spacing.s),
-                              Text(
-                                '${state.phaseSecondsRemaining}s',
-                                style: typography.countdown,
-                              ),
-                              SizedBox(height: spacing.l),
-                              SizedBox(
-                                width: 120,
-                                child: BreathingAnimationWidget(
-                                  fillLevel: state.fillLevel,
-                                  isAnimating:
-                                      state.status == SessionStatus.playing,
-                                  circleScale: state.circleScale,
-                                  circleOpacity: state.circleOpacity,
-                                  circleBottomScale: state.circleBottomScale,
-                                  circleBottomOpacity:
-                                      state.circleBottomOpacity,
-                                  showTopCircle: state.selectedPattern.phases
-                                      .any((p) => p.type == PhaseType.holdIn),
-                                  showBottomCircle: state.selectedPattern.phases
-                                      .any((p) => p.type == PhaseType.holdOut),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ),
+                  );
+                },
               ),
             ),
             Padding(
               padding: EdgeInsets.only(
                 bottom: spacing.xl,
                 left: spacing.m,
-                right: spacing.xl,
+                right: spacing.m,
               ),
               child: Stack(
                 alignment: Alignment.center,

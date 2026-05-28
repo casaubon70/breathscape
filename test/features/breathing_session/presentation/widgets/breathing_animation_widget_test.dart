@@ -11,6 +11,7 @@ Widget _wrap(Widget child) => MaterialApp(
 const _defaultWidget = BreathingAnimationWidget(
   fillLevel: 0.5,
   isAnimating: false,
+  height: 320,
   circleScale: 1,
   circleOpacity: 1,
   circleBottomScale: 1,
@@ -34,6 +35,7 @@ void main() {
             child: BreathingAnimationWidget(
               fillLevel: 0,
               isAnimating: false,
+              height: 320,
               circleScale: 1,
               circleOpacity: 1,
               circleBottomScale: 1,
@@ -53,6 +55,7 @@ void main() {
             child: BreathingAnimationWidget(
               fillLevel: 1,
               isAnimating: true,
+              height: 320,
               circleScale: 1,
               circleOpacity: 1,
               circleBottomScale: 1,
@@ -72,6 +75,7 @@ void main() {
             child: BreathingAnimationWidget(
               fillLevel: 1.5,
               isAnimating: false,
+              height: 320,
               circleScale: 1,
               circleOpacity: 1,
               circleBottomScale: 1,
@@ -93,6 +97,7 @@ void main() {
             child: BreathingAnimationWidget(
               fillLevel: 1,
               isAnimating: true,
+              height: 320,
               circleScale: 0,
               circleOpacity: 0,
               circleBottomScale: 0,

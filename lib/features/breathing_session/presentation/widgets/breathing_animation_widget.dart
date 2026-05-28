@@ -6,6 +6,7 @@ class BreathingAnimationWidget extends StatelessWidget {
   const BreathingAnimationWidget({
     required this.fillLevel,
     required this.isAnimating,
+    required this.height,
     required this.circleScale,
     required this.circleOpacity,
     required this.circleBottomScale,
@@ -17,6 +18,7 @@ class BreathingAnimationWidget extends StatelessWidget {
 
   final double fillLevel;
   final bool isAnimating;
+  final double height;
   final double circleScale;
   final double circleOpacity;
   final double circleBottomScale;
@@ -27,24 +29,26 @@ class BreathingAnimationWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.bTheme.colors;
+    final circleSize = height * 0.375;
+    final radius = height * 0.075;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Opacity(
           opacity: showTopCircle ? 1.0 : 0.0,
-          child: _buildCircle(circleScale, circleOpacity, colors),
+          child: _buildCircle(circleScale, circleOpacity, circleSize, colors),
         ),
         const SizedBox(height: 16),
         SizedBox(
-          height: 320,
+          height: height,
           child: DecoratedBox(
             position: DecorationPosition.foreground,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(radius),
               border: Border.all(color: colors.signal, width: 1.5),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(23),
+              borderRadius: BorderRadius.circular(radius - 1),
               child: Column(
                 children: [
                   Flexible(flex: 2, child: Container(color: colors.surfaceDim)),
@@ -72,16 +76,26 @@ class BreathingAnimationWidget extends StatelessWidget {
         const SizedBox(height: 16),
         Opacity(
           opacity: showBottomCircle ? 1.0 : 0.0,
-          child: _buildCircle(circleBottomScale, circleBottomOpacity, colors),
+          child: _buildCircle(
+            circleBottomScale,
+            circleBottomOpacity,
+            circleSize,
+            colors,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildCircle(double scale, double opacity, BreathscapeColors colors) {
+  Widget _buildCircle(
+    double scale,
+    double opacity,
+    double size,
+    BreathscapeColors colors,
+  ) {
     return SizedBox(
-      width: 120,
-      height: 120,
+      width: size,
+      height: size,
       child: Stack(
         children: [
           Container(
