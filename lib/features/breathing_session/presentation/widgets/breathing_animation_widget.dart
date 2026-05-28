@@ -1,3 +1,5 @@
+import 'package:breathscape/core/theme/app_theme.dart';
+import 'package:breathscape/core/theme/data/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class BreathingAnimationWidget extends StatelessWidget {
@@ -24,66 +26,68 @@ class BreathingAnimationWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bTheme.colors;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Opacity(
           opacity: showTopCircle ? 1.0 : 0.0,
-          child: _buildCircle(circleScale, circleOpacity),
+          child: _buildCircle(circleScale, circleOpacity, colors),
         ),
         const SizedBox(height: 16),
         SizedBox(
           height: 320,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: Column(
-              children: [
-                Flexible(
-                  flex: 2,
-                  child: Container(color: const Color(0xFF0D1520)),
-                ),
-                Flexible(
-                  flex: 6,
-                  child: Stack(
-                    children: [
-                      Container(color: const Color(0xFF1A2A3A)),
-                      Align(
-                        alignment: Alignment.bottomCenter,
-                        child: FractionallySizedBox(
-                          heightFactor: fillLevel.clamp(0.0, 1.0),
-                          child: Container(color: const Color(0xFF4A9EBF)),
+          child: DecoratedBox(
+            position: DecorationPosition.foreground,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: colors.signal, width: 1.5),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(23),
+              child: Column(
+                children: [
+                  Flexible(flex: 2, child: Container(color: colors.surfaceDim)),
+                  Flexible(
+                    flex: 6,
+                    child: Stack(
+                      children: [
+                        Container(color: colors.surface),
+                        Align(
+                          alignment: Alignment.bottomCenter,
+                          child: FractionallySizedBox(
+                            heightFactor: fillLevel.clamp(0.0, 1.0),
+                            child: Container(color: colors.accent),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Flexible(
-                  flex: 2,
-                  child: Container(color: const Color(0xFF0D1520)),
-                ),
-              ],
+                  Flexible(flex: 2, child: Container(color: colors.surfaceDim)),
+                ],
+              ),
             ),
           ),
         ),
         const SizedBox(height: 16),
         Opacity(
           opacity: showBottomCircle ? 1.0 : 0.0,
-          child: _buildCircle(circleBottomScale, circleBottomOpacity),
+          child: _buildCircle(circleBottomScale, circleBottomOpacity, colors),
         ),
       ],
     );
   }
 
-  Widget _buildCircle(double scale, double opacity) {
+  Widget _buildCircle(double scale, double opacity, BreathscapeColors colors) {
     return SizedBox(
       width: 120,
       height: 120,
       child: Stack(
         children: [
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Color(0xFF1A2A3A),
+              color: colors.surface,
             ),
           ),
           Opacity(
@@ -91,11 +95,18 @@ class BreathingAnimationWidget extends StatelessWidget {
             child: Transform.scale(
               scale: scale.clamp(0.0, 1.0),
               child: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Color(0xFF4A9EBF),
+                  color: colors.accent,
                 ),
               ),
+            ),
+          ),
+          // Border als oberstes Element – nie vom Füll-Kreis überdeckt
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: colors.signal, width: 1.5),
             ),
           ),
         ],

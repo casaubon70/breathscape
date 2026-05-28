@@ -12,6 +12,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
         BreathingState(
           selectedPattern: pattern,
           phaseSecondsRemaining: pattern.phases.first.duration.inSeconds,
+          sessionSecondsRemaining: _calcTotalSessionSeconds(pattern),
         ),
       ) {
     on<PlayPressed>(_onPlayPressed);
@@ -77,6 +78,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
       BreathingState(
         selectedPattern: _pattern,
         phaseSecondsRemaining: _pattern.phases.first.duration.inSeconds,
+        sessionSecondsRemaining: _totalSessionSeconds(),
       ),
     );
   }
@@ -91,6 +93,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
       BreathingState(
         selectedPattern: _pattern,
         phaseSecondsRemaining: _pattern.phases.first.duration.inSeconds,
+        sessionSecondsRemaining: _totalSessionSeconds(),
       ),
     );
   }
@@ -98,13 +101,31 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
   // Öffentliches Event – für externe Auslösung und Scheibe-2-Tests.
   void _onPhaseCompleted(PhaseCompleted event, Emitter<BreathingState> emit) {
     if (state.status != SessionStatus.playing) return;
-    final nextPhase = _nextPhaseType();
     final nextIndex = (_phaseIndex + 1) % _pattern.phases.length;
+    final nextPhase = _pattern.phases[nextIndex].type;
+    if (nextPhase == PhaseType.inhale &&
+        state.currentCycle >= _pattern.defaultCycles) {
+      _ticker?.stop();
+      emit(
+        state.copyWith(
+          status: SessionStatus.completed,
+          fillLevel: 0,
+          sessionSecondsRemaining: 0,
+        ),
+      );
+      return;
+    }
+    // Update _phaseIndex before helpers so _sessionSecondsRemaining is correct.
+    _phaseIndex = nextIndex;
+    final nextCycle = nextPhase == PhaseType.inhale
+        ? state.currentCycle + 1
+        : state.currentCycle;
     emit(
       state.copyWith(
         currentPhase: nextPhase,
-        currentCycle: _nextCycle(),
-        phaseSecondsRemaining: _pattern.phases[nextIndex].duration.inSeconds,
+        currentCycle: nextCycle,
+        phaseSecondsRemaining: _pattern.phases[_phaseIndex].duration.inSeconds,
+        sessionSecondsRemaining: _sessionSecondsRemaining(nextCycle),
         fillLevel: _fillLevelForPhase(nextPhase, 0),
         circleScale: _circleScaleForPhase(nextPhase, 0),
         circleOpacity: _circleOpacityForPhase(nextPhase, 0),
@@ -112,7 +133,6 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
         circleBottomOpacity: _circleBottomOpacityForPhase(nextPhase, 0),
       ),
     );
-    _phaseIndex = nextIndex;
   }
 
   // Ticker-Event – verarbeitet delta und wechselt Phase direkt (kein add()).
@@ -127,8 +147,21 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
 
     if (_phaseAccumulated >= phaseDuration) {
       _phaseAccumulated = Duration.zero;
-      _phaseIndex = (_phaseIndex + 1) % _pattern.phases.length;
-      final nextPhase = _pattern.phases[_phaseIndex].type;
+      final nextIndex = (_phaseIndex + 1) % _pattern.phases.length;
+      final nextPhase = _pattern.phases[nextIndex].type;
+      if (nextPhase == PhaseType.inhale &&
+          state.currentCycle >= _pattern.defaultCycles) {
+        _ticker?.stop();
+        emit(
+          state.copyWith(
+            status: SessionStatus.completed,
+            fillLevel: 0,
+            sessionSecondsRemaining: 0,
+          ),
+        );
+        return;
+      }
+      _phaseIndex = nextIndex;
       final nextCycle = nextPhase == PhaseType.inhale
           ? state.currentCycle + 1
           : state.currentCycle;
@@ -137,6 +170,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
           currentPhase: nextPhase,
           currentCycle: nextCycle,
           phaseSecondsRemaining: _secondsRemaining(),
+          sessionSecondsRemaining: _sessionSecondsRemaining(nextCycle),
           fillLevel: _fillLevelForPhase(nextPhase, 0),
           circleScale: _circleScaleForPhase(nextPhase, 0),
           circleOpacity: _circleOpacityForPhase(nextPhase, 0),
@@ -150,6 +184,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
       emit(
         state.copyWith(
           phaseSecondsRemaining: _secondsRemaining(),
+          sessionSecondsRemaining: _sessionSecondsRemaining(state.currentCycle),
           fillLevel: _fillLevelForPhase(state.currentPhase, progress),
           circleScale: _circleScaleForPhase(state.currentPhase, progress),
           circleOpacity: _circleOpacityForPhase(state.currentPhase, progress),
@@ -182,17 +217,26 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     );
   }
 
-  PhaseType _nextPhaseType() {
-    final nextIndex = (_phaseIndex + 1) % _pattern.phases.length;
-    return _pattern.phases[nextIndex].type;
+  /// Seconds remaining in the full session from the current tick position.
+  int _sessionSecondsRemaining(int currentCycle) {
+    final cycleSeconds = _pattern.phases
+        .fold(0, (int s, p) => s + p.duration.inSeconds);
+    var remainingInCycle = 0;
+    for (var i = _phaseIndex + 1; i < _pattern.phases.length; i++) {
+      remainingInCycle += _pattern.phases[i].duration.inSeconds;
+    }
+    final completeCyclesLeft = _pattern.defaultCycles - currentCycle;
+    return _secondsRemaining() +
+        remainingInCycle +
+        completeCyclesLeft * cycleSeconds;
   }
 
-  int _nextCycle() {
-    final nextPhase = _nextPhaseType();
-    return nextPhase == PhaseType.inhale
-        ? state.currentCycle + 1
-        : state.currentCycle;
-  }
+  int _totalSessionSeconds() =>
+      _calcTotalSessionSeconds(_pattern);
+
+  static int _calcTotalSessionSeconds(BreathingPattern pattern) =>
+      pattern.defaultCycles *
+      pattern.phases.fold(0, (int s, p) => s + p.duration.inSeconds);
 
   double _fillLevelForPhase(PhaseType phase, double progress) {
     return switch (phase) {

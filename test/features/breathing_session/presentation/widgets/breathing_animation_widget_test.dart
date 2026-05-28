@@ -1,8 +1,12 @@
+import 'package:breathscape/core/theme/themes/dark_ocean_theme.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/breathing_animation_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
+Widget _wrap(Widget child) => MaterialApp(
+  theme: darkOceanTheme.toThemeData(),
+  home: Scaffold(body: child),
+);
 
 const _defaultWidget = BreathingAnimationWidget(
   fillLevel: 0.5,

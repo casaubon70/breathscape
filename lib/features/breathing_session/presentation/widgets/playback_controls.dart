@@ -1,3 +1,4 @@
+import 'package:breathscape/core/theme/app_theme.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart';
 import 'package:flutter/material.dart';
 
@@ -7,6 +8,7 @@ class PlaybackControls extends StatelessWidget {
     required this.onPlay,
     required this.onPause,
     required this.onReset,
+    this.onSettings,
     super.key,
   });
 
@@ -14,24 +16,39 @@ class PlaybackControls extends StatelessWidget {
   final VoidCallback onPlay;
   final VoidCallback onPause;
   final VoidCallback onReset;
+  final VoidCallback? onSettings;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bTheme.colors;
+    final spacing = context.bTheme.spacing;
+    final isCompleted = status == SessionStatus.completed;
     final isPlaying = status == SessionStatus.playing;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          iconSize: 72,
-          color: Colors.white,
-          icon: Icon(isPlaying ? Icons.pause_circle : Icons.play_circle),
-          onPressed: isPlaying ? onPause : onPlay,
+          iconSize: 32,
+          color: colors.textHint,
+          icon: const Icon(Icons.settings),
+          onPressed: onSettings,
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: spacing.s),
+        IconButton(
+          iconSize: 72,
+          color: isCompleted ? colors.textHint : colors.signal,
+          icon: Icon(isPlaying ? Icons.pause_circle : Icons.play_circle),
+          onPressed: isCompleted ? null : isPlaying ? onPause : onPlay,
+        ),
+        SizedBox(width: spacing.s),
         IconButton(
           iconSize: 32,
-          color: Colors.white38,
-          icon: const Icon(Icons.refresh),
+          color: isCompleted ? Colors.black : colors.textHint,
+          style: isCompleted
+              ? IconButton.styleFrom(backgroundColor: colors.signal)
+              : null,
+          icon: const Icon(Icons.replay),
           onPressed: onReset,
         ),
       ],

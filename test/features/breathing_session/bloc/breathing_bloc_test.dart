@@ -149,6 +149,118 @@ void main() {
     );
   });
 
+  group('BreathingBloc – Cycle-Completion', () {
+    const singleCyclePattern = BreathingPattern(
+      name: 'Single Cycle',
+      defaultCycles: 1,
+      phases: [
+        BreathingPhase(type: PhaseType.inhale, duration: Duration(seconds: 4)),
+        BreathingPhase(type: PhaseType.exhale, duration: Duration(seconds: 4)),
+      ],
+    );
+
+    blocTest<BreathingBloc, BreathingState>(
+      'nach defaultCycles via PhaseCompleted → status completed, fillLevel 0',
+      build: () => BreathingBloc(pattern: singleCyclePattern),
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const PhaseCompleted()) // exhale
+        ..add(const PhaseCompleted()), // würde inhale starten → completed
+      skip: 1,
+      expect: () => [
+        isA<BreathingState>().having(
+          (s) => s.currentPhase,
+          'phase',
+          PhaseType.exhale,
+        ),
+        isA<BreathingState>()
+            .having((s) => s.status, 'status', SessionStatus.completed)
+            .having((s) => s.fillLevel, 'fillLevel', 0.0),
+      ],
+    );
+
+    blocTest<BreathingBloc, BreathingState>(
+      'nach defaultCycles via Tick → status completed, fillLevel 0',
+      build: () => BreathingBloc(pattern: singleCyclePattern),
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))), // → completed
+      skip: 1,
+      expect: () => [
+        isA<BreathingState>().having(
+          (s) => s.currentPhase,
+          'phase',
+          PhaseType.exhale,
+        ),
+        isA<BreathingState>()
+            .having((s) => s.status, 'status', SessionStatus.completed)
+            .having((s) => s.fillLevel, 'fillLevel', 0.0),
+      ],
+    );
+
+    blocTest<BreathingBloc, BreathingState>(
+      'ResetPressed aus completed → idle, Zyklus 1',
+      build: () => BreathingBloc(pattern: singleCyclePattern),
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const PhaseCompleted())
+        ..add(const PhaseCompleted()) // completed
+        ..add(const ResetPressed()),
+      skip: 3,
+      expect: () => [
+        isA<BreathingState>()
+            .having((s) => s.status, 'status', SessionStatus.idle)
+            .having((s) => s.currentCycle, 'cycle', 1),
+      ],
+    );
+
+    blocTest<BreathingBloc, BreathingState>(
+      'mit defaultCycles 2 läuft zweiter Zyklus noch durch',
+      build: () => BreathingBloc(
+        pattern: const BreathingPattern(
+          name: 'Two Cycles',
+          defaultCycles: 2,
+          phases: [
+            BreathingPhase(
+              type: PhaseType.inhale,
+              duration: Duration(seconds: 4),
+            ),
+            BreathingPhase(
+              type: PhaseType.exhale,
+              duration: Duration(seconds: 4),
+            ),
+          ],
+        ),
+      ),
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const PhaseCompleted()) // exhale cycle 1
+        ..add(const PhaseCompleted()) // inhale cycle 2
+        ..add(const PhaseCompleted()) // exhale cycle 2
+        ..add(const PhaseCompleted()), // → completed
+      skip: 1,
+      expect: () => [
+        isA<BreathingState>().having(
+          (s) => s.currentPhase,
+          'phase',
+          PhaseType.exhale,
+        ),
+        isA<BreathingState>()
+            .having((s) => s.currentPhase, 'phase', PhaseType.inhale)
+            .having((s) => s.currentCycle, 'cycle', 2),
+        isA<BreathingState>().having(
+          (s) => s.currentPhase,
+          'phase',
+          PhaseType.exhale,
+        ),
+        isA<BreathingState>()
+            .having((s) => s.status, 'status', SessionStatus.completed)
+            .having((s) => s.fillLevel, 'fillLevel', 0.0),
+      ],
+    );
+  });
+
   group('BreathingBloc – Ticker-Logik (Scheibe 4)', () {
     blocTest<BreathingBloc, BreathingState>(
       'Tick mit halbem Delta → fillLevel 0.5 (Inhale-Phase)',

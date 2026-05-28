@@ -1,3 +1,5 @@
+import 'package:breathscape/core/theme/themes/dark_ocean_theme.dart';
+import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
 import 'package:breathscape/features/breathing_session/presentation/breathing_session_page.dart';
@@ -18,8 +20,9 @@ const _testPatterns = [
 
 Future<List<BreathingPattern>> _loadTestPatterns() async => _testPatterns;
 
-Widget _buildPage() => const MaterialApp(
-  home: BreathingSessionPage(patternsLoader: _loadTestPatterns),
+Widget _buildPage() => MaterialApp(
+  theme: darkOceanTheme.toThemeData(),
+  home: const BreathingSessionPage(patternsLoader: _loadTestPatterns),
 );
 
 void main() {
@@ -67,7 +70,7 @@ void main() {
       await tester.pumpWidget(_buildPage());
       await tester.pump();
 
-      expect(find.text('INHALE'), findsOneWidget);
+      expect(find.text('READY'), findsOneWidget);
       expect(find.text('4s'), findsOneWidget);
     });
 
@@ -76,6 +79,65 @@ void main() {
       await tester.pump();
 
       expect(find.text('Test Pattern'), findsOneWidget);
+    });
+  });
+
+  group('PlaybackControls – Completed State', () {
+    Widget buildControls(SessionStatus status) => MaterialApp(
+      theme: darkOceanTheme.toThemeData(),
+      home: Scaffold(
+        body: PlaybackControls(
+          status: status,
+          onPlay: () {},
+          onPause: () {},
+          onReset: () {},
+        ),
+      ),
+    );
+
+    testWidgets('completed: Play ausgegraut, Replay-Button sichtbar',
+        (tester) async {
+      await tester.pumpWidget(buildControls(SessionStatus.completed));
+
+      expect(find.byIcon(Icons.play_circle), findsOneWidget);
+      expect(find.byIcon(Icons.replay), findsOneWidget);
+      expect(find.byIcon(Icons.pause_circle), findsNothing);
+      expect(find.byIcon(Icons.refresh), findsNothing);
+    });
+
+    testWidgets('idle: zeigt Play-Icon und Replay-Reset-Icon', (tester) async {
+      await tester.pumpWidget(buildControls(SessionStatus.idle));
+
+      expect(find.byIcon(Icons.play_circle), findsOneWidget);
+      expect(find.byIcon(Icons.replay), findsOneWidget);
+      expect(find.byIcon(Icons.refresh), findsNothing);
+    });
+
+    testWidgets('playing: zeigt Pause-Icon und Replay-Reset-Icon',
+        (tester) async {
+      await tester.pumpWidget(buildControls(SessionStatus.playing));
+
+      expect(find.byIcon(Icons.pause_circle), findsOneWidget);
+      expect(find.byIcon(Icons.replay), findsOneWidget);
+      expect(find.byIcon(Icons.refresh), findsNothing);
+    });
+
+    testWidgets('Tap Replay ruft onReset auf', (tester) async {
+      var resetCalled = false;
+      await tester.pumpWidget(MaterialApp(
+        theme: darkOceanTheme.toThemeData(),
+        home: Scaffold(
+          body: PlaybackControls(
+            status: SessionStatus.completed,
+            onPlay: () {},
+            onPause: () {},
+            onReset: () => resetCalled = true,
+          ),
+        ),
+      ));
+
+      await tester.tap(find.byIcon(Icons.replay));
+      expect(resetCalled, isTrue);
     });
   });
 }

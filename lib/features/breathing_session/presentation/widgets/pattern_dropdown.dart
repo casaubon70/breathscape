@@ -1,3 +1,4 @@
+import 'package:breathscape/core/theme/app_theme.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_bloc.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_event.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart'
@@ -13,26 +14,28 @@ class PatternDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bTheme.colors;
+    final spacing = context.bTheme.spacing;
+    final typography = context.bTheme.typography;
+
     return BlocBuilder<BreathingBloc, BreathingState>(
       buildWhen: (prev, curr) => prev.selectedPattern != curr.selectedPattern,
       builder: (context, state) {
         return Align(
           alignment: Alignment.centerLeft,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+            padding: EdgeInsets.fromLTRB(
+              spacing.l,
+              spacing.m,
+              spacing.l,
+              spacing.s,
+            ),
             child: DropdownButton<BreathingPattern>(
               value: state.selectedPattern,
-              dropdownColor: const Color(0xFF1A2E42),
+              dropdownColor: colors.surfaceDropdown,
               underline: const SizedBox.shrink(),
-              icon: const Icon(
-                Icons.keyboard_arrow_down,
-                color: Colors.white54,
-              ),
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
-                letterSpacing: 0.5,
-              ),
+              icon: Icon(Icons.keyboard_arrow_down, color: colors.iconSubtle),
+              style: typography.dropdownItem,
               items: patterns
                   .map(
                     (p) => DropdownMenuItem<BreathingPattern>(

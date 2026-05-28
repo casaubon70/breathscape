@@ -2,7 +2,7 @@ import 'package:breathscape/features/breathing_session/domain/breathing_pattern.
 import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
 import 'package:equatable/equatable.dart';
 
-enum SessionStatus { idle, playing, paused }
+enum SessionStatus { idle, playing, paused, completed }
 
 final class BreathingState extends Equatable {
   const BreathingState({
@@ -12,6 +12,7 @@ final class BreathingState extends Equatable {
     this.fillLevel = 0.0,
     this.currentCycle = 1,
     this.phaseSecondsRemaining = 0,
+    this.sessionSecondsRemaining = 0,
     this.circleScale = 1.0,
     this.circleOpacity = 1.0,
     this.circleBottomScale = 1.0,
@@ -24,6 +25,7 @@ final class BreathingState extends Equatable {
   final double fillLevel;
   final int currentCycle;
   final int phaseSecondsRemaining;
+  final int sessionSecondsRemaining;
   final double circleScale;
   final double circleOpacity;
   final double circleBottomScale;
@@ -36,6 +38,7 @@ final class BreathingState extends Equatable {
     double? fillLevel,
     int? currentCycle,
     int? phaseSecondsRemaining,
+    int? sessionSecondsRemaining,
     double? circleScale,
     double? circleOpacity,
     double? circleBottomScale,
@@ -49,6 +52,8 @@ final class BreathingState extends Equatable {
       currentCycle: currentCycle ?? this.currentCycle,
       phaseSecondsRemaining:
           phaseSecondsRemaining ?? this.phaseSecondsRemaining,
+      sessionSecondsRemaining:
+          sessionSecondsRemaining ?? this.sessionSecondsRemaining,
       circleScale: circleScale ?? this.circleScale,
       circleOpacity: circleOpacity ?? this.circleOpacity,
       circleBottomScale: circleBottomScale ?? this.circleBottomScale,
@@ -64,6 +69,7 @@ final class BreathingState extends Equatable {
     fillLevel,
     currentCycle,
     phaseSecondsRemaining,
+    sessionSecondsRemaining,
     circleScale,
     circleOpacity,
     circleBottomScale,

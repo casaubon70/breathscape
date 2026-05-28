@@ -1,5 +1,6 @@
 patterns:
   - name: Box Breathing
+    default_cycles: 10
     phases:
       - type: inhale
         seconds: 4
@@ -11,6 +12,7 @@ patterns:
         seconds: 4
 
   - name: 4-7-8 Breathing
+    default_cycles: 10
     phases:
       - type: inhale
         seconds: 4
@@ -20,6 +22,7 @@ patterns:
         seconds: 8
 
   - name: Coherent Breathing
+    default_cycles: 10
     phases:
       - type: inhale
         seconds: 5

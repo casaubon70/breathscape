@@ -1,3 +1,4 @@
+import 'package:breathscape/core/theme/app_theme.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_bloc.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_event.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart';
@@ -5,8 +6,10 @@ import 'package:breathscape/features/breathing_session/domain/breathing_pattern.
 import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
 import 'package:breathscape/features/breathing_session/domain/patterns_repository.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/breathing_animation_widget.dart';
+import 'package:breathscape/features/breathing_session/presentation/widgets/cycle_counter.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/pattern_dropdown.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/playback_controls.dart';
+import 'package:breathscape/features/breathing_session/presentation/widgets/session_countdown.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -34,10 +37,11 @@ class _BreathingSessionPageState extends State<BreathingSessionPage> {
       future: _patternsFuture,
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return const Scaffold(
-            backgroundColor: Color(0xFF0D1B2A),
+          return Scaffold(
             body: Center(
-              child: CircularProgressIndicator(color: Colors.white38),
+              child: CircularProgressIndicator(
+                color: context.bTheme.colors.textHint,
+              ),
             ),
           );
         }
@@ -58,8 +62,10 @@ class _BreathingSessionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final spacing = context.bTheme.spacing;
+    final typography = context.bTheme.typography;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1B2A),
       body: SafeArea(
         child: Column(
           children: [
@@ -78,22 +84,15 @@ class _BreathingSessionView extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                _phaseLabel(state.currentPhase),
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 20,
-                                  letterSpacing: 2,
-                                ),
+                                _phaseLabel(state.status, state.currentPhase),
+                                style: typography.phaseLabel,
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: spacing.s),
                               Text(
                                 '${state.phaseSecondsRemaining}s',
-                                style: const TextStyle(
-                                  color: Colors.white38,
-                                  fontSize: 14,
-                                ),
+                                style: typography.countdown,
                               ),
-                              const SizedBox(height: 24),
+                              SizedBox(height: spacing.l),
                               SizedBox(
                                 width: 120,
                                 child: BreathingAnimationWidget(
@@ -120,22 +119,61 @@ class _BreathingSessionView extends StatelessWidget {
                 ),
               ),
             ),
-            BlocBuilder<BreathingBloc, BreathingState>(
-              buildWhen: (prev, curr) => prev.status != curr.status,
-              builder: (context, state) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 32),
-                  child: PlaybackControls(
-                    status: state.status,
-                    onPlay: () =>
-                        context.read<BreathingBloc>().add(const PlayPressed()),
-                    onPause: () =>
-                        context.read<BreathingBloc>().add(const PausePressed()),
-                    onReset: () =>
-                        context.read<BreathingBloc>().add(const ResetPressed()),
+            Padding(
+              padding: EdgeInsets.only(
+                bottom: spacing.xl,
+                left: spacing.m,
+                right: spacing.xl,
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  BlocBuilder<BreathingBloc, BreathingState>(
+                    buildWhen: (prev, curr) => prev.status != curr.status,
+                    builder: (context, state) => PlaybackControls(
+                      status: state.status,
+                      onPlay: () => context
+                          .read<BreathingBloc>()
+                          .add(const PlayPressed()),
+                      onPause: () => context
+                          .read<BreathingBloc>()
+                          .add(const PausePressed()),
+                      onReset: () => context
+                          .read<BreathingBloc>()
+                          .add(const ResetPressed()),
+                    ),
                   ),
-                );
-              },
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: spacing.m),
+                      child: BlocBuilder<BreathingBloc, BreathingState>(
+                        buildWhen: (prev, curr) =>
+                            prev.sessionSecondsRemaining !=
+                            curr.sessionSecondsRemaining,
+                        builder: (context, state) => SessionCountdown(
+                          seconds: state.sessionSecondsRemaining,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: EdgeInsets.only(right: spacing.m),
+                      child: BlocBuilder<BreathingBloc, BreathingState>(
+                        buildWhen: (prev, curr) =>
+                            prev.currentCycle != curr.currentCycle ||
+                            prev.selectedPattern != curr.selectedPattern,
+                        builder: (context, state) => CycleCounter(
+                          current: state.currentCycle,
+                          total: state.selectedPattern.defaultCycles,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -143,7 +181,11 @@ class _BreathingSessionView extends StatelessWidget {
     );
   }
 
-  String _phaseLabel(PhaseType phase) {
+  String _phaseLabel(SessionStatus status, PhaseType phase) {
+    if (status == SessionStatus.completed) return 'COMPLETE';
+    if (status == SessionStatus.idle || status == SessionStatus.paused) {
+      return 'READY';
+    }
     return switch (phase) {
       PhaseType.inhale => 'INHALE',
       PhaseType.holdIn => 'HOLD',
