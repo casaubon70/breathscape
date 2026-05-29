@@ -124,46 +124,61 @@ class _BreathingSessionView extends StatelessWidget {
                                       style: typography.countdown,
                                     ),
                                     SizedBox(height: spacing.l),
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        SizedBox(
-                                          width: animHeight * 0.375,
-                                          child: BreathingAnimationWidget(
-                                            height: animHeight,
-                                            fillLevel: state.fillLevel,
-                                            isAnimating:
-                                                state.status ==
-                                                SessionStatus.playing,
-                                            circleScale: state.circleScale,
-                                            circleOpacity: state.circleOpacity,
-                                            circleBottomScale:
-                                                state.circleBottomScale,
-                                            circleBottomOpacity:
-                                                state.circleBottomOpacity,
-                                            isExtendedExhale:
-                                                state.isExtendedExhale,
-                                            deepZoneFill: state.deepZoneFill,
-                                            showTopCircle: state
-                                                .selectedPattern
-                                                .phases
-                                                .any(
-                                                  (p) =>
-                                                      p.type ==
-                                                      PhaseType.holdIn,
-                                                ),
-                                            showBottomCircle: state
-                                                .selectedPattern
-                                                .phases
-                                                .any(
-                                                  (p) =>
-                                                      p.type ==
-                                                      PhaseType.holdOut,
-                                                ),
+                                    SizedBox(
+                                      width: constraints.maxWidth,
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          SizedBox(
+                                            width: animHeight * 0.375,
+                                            child: BreathingAnimationWidget(
+                                              height: animHeight,
+                                              fillLevel: state.fillLevel,
+                                              isAnimating:
+                                                  state.status ==
+                                                  SessionStatus.playing,
+                                              circleScale: state.circleScale,
+                                              circleOpacity:
+                                                  state.circleOpacity,
+                                              circleBottomScale:
+                                                  state.circleBottomScale,
+                                              circleBottomOpacity:
+                                                  state.circleBottomOpacity,
+                                              isExtendedExhale:
+                                                  state.isExtendedExhale,
+                                              deepZoneFill: state.deepZoneFill,
+                                              showTopCircle: state
+                                                  .selectedPattern
+                                                  .phases
+                                                  .any(
+                                                    (p) =>
+                                                        p.type ==
+                                                        PhaseType.holdIn,
+                                                  ),
+                                              showBottomCircle: state
+                                                  .selectedPattern
+                                                  .phases
+                                                  .any(
+                                                    (p) =>
+                                                        p.type ==
+                                                        PhaseType.holdOut,
+                                                  ),
+                                            ),
                                           ),
-                                        ),
-                                        const VoiceMuteButton(),
-                                      ],
+                                          Align(
+                                            alignment: Alignment.centerRight,
+                                            child: SizedBox(
+                                              width:
+                                                  (constraints.maxWidth -
+                                                      animHeight * 0.375) /
+                                                  2,
+                                              child: const Center(
+                                                child: VoiceMuteButton(),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 );
