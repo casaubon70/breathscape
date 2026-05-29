@@ -11,7 +11,8 @@ import 'package:breathscape/features/breathing_session/domain/patterns_repositor
 import 'package:breathscape/features/breathing_session/presentation/widgets/breathing_animation_widget.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/cycle_counter.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/cycle_dot_row.dart';
-import 'package:breathscape/features/breathing_session/presentation/widgets/pattern_dropdown.dart';
+import 'package:breathscape/features/breathing_session/presentation/widgets/pattern_dropdown.dart'
+    show PatternSelectorButton;
 import 'package:breathscape/features/breathing_session/presentation/widgets/playback_controls.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/session_countdown.dart';
 import 'package:flutter/material.dart';
@@ -78,16 +79,20 @@ class _BreathingSessionView extends StatelessWidget {
       listener: (context, state) {
         final audioBloc = context.read<AudioBloc>();
         if (state.status == SessionStatus.playing) {
-          audioBloc.add(PlayPhaseVoiceCue(state.currentPhase));
+          audioBloc
+            ..add(PlayPhaseVoiceCue(state.currentPhase))
+            ..add(PlayPhaseNoiseCue(state.currentPhase));
         } else {
-          audioBloc.add(const StopVoiceCue());
+          audioBloc
+            ..add(const StopVoiceCue())
+            ..add(const StopNoiseCue());
         }
       },
       child: Scaffold(
         body: SafeArea(
           child: Column(
             children: [
-              PatternDropdown(patterns: patterns),
+              PatternSelectorButton(patterns: patterns),
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {

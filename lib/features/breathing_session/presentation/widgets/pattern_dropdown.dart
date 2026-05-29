@@ -4,11 +4,12 @@ import 'package:breathscape/features/breathing_session/bloc/breathing_event.dart
 import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart'
     show BreathingState;
 import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
+import 'package:breathscape/features/breathing_session/presentation/pattern_picker_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class PatternDropdown extends StatelessWidget {
-  const PatternDropdown({required this.patterns, super.key});
+class PatternSelectorButton extends StatelessWidget {
+  const PatternSelectorButton({required this.patterns, super.key});
 
   final List<BreathingPattern> patterns;
 
@@ -30,25 +31,36 @@ class PatternDropdown extends StatelessWidget {
               spacing.l,
               spacing.s,
             ),
-            child: DropdownButton<BreathingPattern>(
-              value: state.selectedPattern,
-              dropdownColor: colors.surfaceDropdown,
-              underline: const SizedBox.shrink(),
-              icon: Icon(Icons.keyboard_arrow_down, color: colors.iconSubtle),
-              style: typography.dropdownItem,
-              items: patterns
-                  .map(
-                    (p) => DropdownMenuItem<BreathingPattern>(
-                      value: p,
-                      child: Text(p.name),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (pattern) {
-                if (pattern != null) {
-                  context.read<BreathingBloc>().add(PatternSelected(pattern));
+            child: GestureDetector(
+              onTap: () async {
+                final result = await Navigator.of(context)
+                    .push<BreathingPattern>(
+                      MaterialPageRoute<BreathingPattern>(
+                        builder: (_) => PatternPickerPage(
+                          patterns: patterns,
+                          selectedPattern: state.selectedPattern,
+                        ),
+                      ),
+                    );
+                if (result != null && context.mounted) {
+                  context.read<BreathingBloc>().add(PatternSelected(result));
                 }
               },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    state.selectedPattern.name,
+                    style: typography.dropdownItem,
+                  ),
+                  SizedBox(width: spacing.xs),
+                  Icon(
+                    Icons.keyboard_arrow_right,
+                    color: colors.iconSubtle,
+                    size: 20,
+                  ),
+                ],
+              ),
             ),
           ),
         );
