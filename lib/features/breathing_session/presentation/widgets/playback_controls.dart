@@ -58,7 +58,11 @@ class PlaybackControls extends StatelessWidget {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             icon: Icon(isPlaying ? Icons.pause_circle : Icons.play_circle),
-            onPressed: isCompleted ? null : isPlaying ? onPause : onPlay,
+            onPressed: isCompleted
+                ? null
+                : isPlaying
+                ? onPause
+                : onPlay,
           ),
         ),
         Expanded(

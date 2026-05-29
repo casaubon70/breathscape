@@ -24,3 +24,20 @@ final class StopVoiceCue extends AudioEvent {
 final class VoiceMuteToggled extends AudioEvent {
   const VoiceMuteToggled();
 }
+
+final class PlayPhaseNoiseCue extends AudioEvent {
+  const PlayPhaseNoiseCue(this.phase);
+
+  final PhaseType phase;
+
+  @override
+  List<Object?> get props => [phase];
+}
+
+final class StopNoiseCue extends AudioEvent {
+  const StopNoiseCue();
+}
+
+final class NoiseMuteToggled extends AudioEvent {
+  const NoiseMuteToggled();
+}
