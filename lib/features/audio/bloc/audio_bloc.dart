@@ -12,6 +12,7 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
       super(const AudioState()) {
     on<PlayPhaseVoiceCue>(_onPlayPhaseVoiceCue);
     on<StopVoiceCue>(_onStopVoiceCue);
+    on<VoiceMuteToggled>(_onVoiceMuteToggled);
   }
 
   final AudioPlayer _voicePlayer;
@@ -26,6 +27,7 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     PlayPhaseVoiceCue event,
     Emitter<AudioState> emit,
   ) async {
+    if (state.isMuted) return;
     final path = VoiceCueMap.assetPath(event.phase);
     if (path == null) return;
 
@@ -41,5 +43,19 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
   ) async {
     await _voicePlayer.stop();
     emit(state.copyWith(status: AudioStatus.idle));
+  }
+
+  Future<void> _onVoiceMuteToggled(
+    VoiceMuteToggled event,
+    Emitter<AudioState> emit,
+  ) async {
+    final muting = !state.isMuted;
+    if (muting) await _voicePlayer.stop();
+    emit(
+      state.copyWith(
+        isMuted: muting,
+        status: muting ? AudioStatus.idle : state.status,
+      ),
+    );
   }
 }

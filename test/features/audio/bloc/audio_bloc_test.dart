@@ -72,6 +72,17 @@ void main() {
           verify(() => mockPlayer.stop()).called(2);
         },
       );
+
+      blocTest<AudioBloc, AudioState>(
+        'does not play when muted',
+        build: buildBloc,
+        seed: () => const AudioState(isMuted: true),
+        act: (bloc) => bloc.add(const PlayPhaseVoiceCue(PhaseType.inhale)),
+        expect: () => <AudioState>[],
+        verify: (_) {
+          verifyNever(() => mockPlayer.play());
+        },
+      );
     });
 
     group('StopVoiceCue', () {
@@ -83,6 +94,32 @@ void main() {
         expect: () => [const AudioState()],
         verify: (_) {
           verify(() => mockPlayer.stop()).called(1);
+        },
+      );
+    });
+
+    group('VoiceMuteToggled', () {
+      blocTest<AudioBloc, AudioState>(
+        'mutes and stops player when currently unmuted',
+        build: buildBloc,
+        seed: () => const AudioState(status: AudioStatus.playing),
+        act: (bloc) => bloc.add(const VoiceMuteToggled()),
+        expect: () => [
+          const AudioState(status: AudioStatus.idle, isMuted: true),
+        ],
+        verify: (_) {
+          verify(() => mockPlayer.stop()).called(1);
+        },
+      );
+
+      blocTest<AudioBloc, AudioState>(
+        'unmutes without touching player when currently muted',
+        build: buildBloc,
+        seed: () => const AudioState(isMuted: true),
+        act: (bloc) => bloc.add(const VoiceMuteToggled()),
+        expect: () => [const AudioState()],
+        verify: (_) {
+          verifyNever(() => mockPlayer.stop());
         },
       );
     });

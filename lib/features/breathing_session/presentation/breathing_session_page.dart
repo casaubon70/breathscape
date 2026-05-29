@@ -1,6 +1,7 @@
 import 'package:breathscape/core/theme/app_theme.dart';
 import 'package:breathscape/features/audio/bloc/audio_bloc.dart';
 import 'package:breathscape/features/audio/bloc/audio_event.dart';
+import 'package:breathscape/features/audio/presentation/widgets/voice_mute_button.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_bloc.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_event.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart';
@@ -123,37 +124,46 @@ class _BreathingSessionView extends StatelessWidget {
                                       style: typography.countdown,
                                     ),
                                     SizedBox(height: spacing.l),
-                                    SizedBox(
-                                      width: animHeight * 0.375,
-                                      child: BreathingAnimationWidget(
-                                        height: animHeight,
-                                        fillLevel: state.fillLevel,
-                                        isAnimating:
-                                            state.status ==
-                                            SessionStatus.playing,
-                                        circleScale: state.circleScale,
-                                        circleOpacity: state.circleOpacity,
-                                        circleBottomScale:
-                                            state.circleBottomScale,
-                                        circleBottomOpacity:
-                                            state.circleBottomOpacity,
-                                        isExtendedExhale:
-                                            state.isExtendedExhale,
-                                        deepZoneFill: state.deepZoneFill,
-                                        showTopCircle: state
-                                            .selectedPattern
-                                            .phases
-                                            .any(
-                                              (p) => p.type == PhaseType.holdIn,
-                                            ),
-                                        showBottomCircle: state
-                                            .selectedPattern
-                                            .phases
-                                            .any(
-                                              (p) =>
-                                                  p.type == PhaseType.holdOut,
-                                            ),
-                                      ),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        SizedBox(
+                                          width: animHeight * 0.375,
+                                          child: BreathingAnimationWidget(
+                                            height: animHeight,
+                                            fillLevel: state.fillLevel,
+                                            isAnimating:
+                                                state.status ==
+                                                SessionStatus.playing,
+                                            circleScale: state.circleScale,
+                                            circleOpacity: state.circleOpacity,
+                                            circleBottomScale:
+                                                state.circleBottomScale,
+                                            circleBottomOpacity:
+                                                state.circleBottomOpacity,
+                                            isExtendedExhale:
+                                                state.isExtendedExhale,
+                                            deepZoneFill: state.deepZoneFill,
+                                            showTopCircle: state
+                                                .selectedPattern
+                                                .phases
+                                                .any(
+                                                  (p) =>
+                                                      p.type ==
+                                                      PhaseType.holdIn,
+                                                ),
+                                            showBottomCircle: state
+                                                .selectedPattern
+                                                .phases
+                                                .any(
+                                                  (p) =>
+                                                      p.type ==
+                                                      PhaseType.holdOut,
+                                                ),
+                                          ),
+                                        ),
+                                        const VoiceMuteButton(),
+                                      ],
                                     ),
                                   ],
                                 );

@@ -20,3 +20,7 @@ final class PlayPhaseVoiceCue extends AudioEvent {
 final class StopVoiceCue extends AudioEvent {
   const StopVoiceCue();
 }
+
+final class VoiceMuteToggled extends AudioEvent {
+  const VoiceMuteToggled();
+}
