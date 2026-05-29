@@ -6,6 +6,7 @@ class BreathingPattern extends Equatable {
     required this.name,
     required this.phases,
     this.defaultCycles = 10,
+    this.extendedExhaleInterval,
   });
 
   factory BreathingPattern.fromMap(Map<dynamic, dynamic> map) {
@@ -17,6 +18,7 @@ class BreathingPattern extends Equatable {
           .map(BreathingPhase.fromMap)
           .toList(),
       defaultCycles: (map['default_cycles'] as int?) ?? 10,
+      extendedExhaleInterval: map['extended_exhale_interval'] as int?,
     );
   }
 
@@ -24,6 +26,14 @@ class BreathingPattern extends Equatable {
   final List<BreathingPhase> phases;
   final int defaultCycles;
 
+  /// Every Nth cycle uses an extended exhale (exhale + 2 s). Null = disabled.
+  final int? extendedExhaleInterval;
+
   @override
-  List<Object> get props => [name, phases, defaultCycles];
+  List<Object?> get props => [
+    name,
+    phases,
+    defaultCycles,
+    extendedExhaleInterval,
+  ];
 }

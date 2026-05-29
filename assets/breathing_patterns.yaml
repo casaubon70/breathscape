@@ -1,6 +1,7 @@
 patterns:
   - name: Box Breathing
     default_cycles: 10
+    extended_exhale_interval: 3
     phases:
       - type: inhale
         seconds: 4
@@ -21,8 +22,18 @@ patterns:
       - type: exhale
         seconds: 8
 
+  - name: Test Deep-Exhale
+    default_cycles: 10
+    extended_exhale_interval: 1
+    phases:
+      - type: inhale
+        seconds: 2
+      - type: exhale
+        seconds: 2
+
   - name: Coherent Breathing
     default_cycles: 10
+    extended_exhale_interval: 5
     phases:
       - type: inhale
         seconds: 5

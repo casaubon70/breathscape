@@ -108,5 +108,48 @@ void main() {
       );
       expect(tester.takeException(), isNull);
     });
+
+    testWidgets('isExtendedExhale=true renders without error', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const SizedBox(
+            width: 120,
+            child: BreathingAnimationWidget(
+              fillLevel: 0.5,
+              isAnimating: true,
+              height: 320,
+              circleScale: 1,
+              circleOpacity: 1,
+              circleBottomScale: 1,
+              circleBottomOpacity: 1,
+              isExtendedExhale: true,
+            ),
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('deepZoneFill=0.5 renders without error', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const SizedBox(
+            width: 120,
+            child: BreathingAnimationWidget(
+              fillLevel: 0,
+              isAnimating: true,
+              height: 320,
+              circleScale: 1,
+              circleOpacity: 1,
+              circleBottomScale: 1,
+              circleBottomOpacity: 1,
+              isExtendedExhale: true,
+              deepZoneFill: 0.5,
+            ),
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+    });
   });
 }

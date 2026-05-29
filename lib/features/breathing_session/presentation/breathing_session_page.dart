@@ -7,6 +7,7 @@ import 'package:breathscape/features/breathing_session/domain/breathing_phase.da
 import 'package:breathscape/features/breathing_session/domain/patterns_repository.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/breathing_animation_widget.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/cycle_counter.dart';
+import 'package:breathscape/features/breathing_session/presentation/widgets/cycle_dot_row.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/pattern_dropdown.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/playback_controls.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/session_countdown.dart';
@@ -75,45 +76,86 @@ class _BreathingSessionView extends StatelessWidget {
                 builder: (context, constraints) {
                   // 0.40 accounts for circles (each 37.5% of bar height)
                   // and labels above. Total widget H ≈ barH × 1.75 + 32 px.
+                  // Subtract the dot-row area derived from the widget's own
+                  // constant + the theme spacing so no magic number creeps in.
+                  final dotsAreaHeight = CycleDotRow.dotLarge + spacing.m;
                   final animHeight =
-                      (constraints.maxHeight * 0.40).clamp(130.0, 300.0);
-                  return Center(
-                    child: BlocBuilder<BreathingBloc, BreathingState>(
-                      builder: (context, state) {
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _phaseLabel(state.status, state.currentPhase),
-                              style: typography.phaseLabel,
-                            ),
-                            SizedBox(height: spacing.s),
-                            Text(
-                              '${state.phaseSecondsRemaining}s',
-                              style: typography.countdown,
-                            ),
-                            SizedBox(height: spacing.l),
-                            SizedBox(
-                              width: animHeight * 0.375,
-                              child: BreathingAnimationWidget(
-                                height: animHeight,
-                                fillLevel: state.fillLevel,
-                                isAnimating:
-                                    state.status == SessionStatus.playing,
-                                circleScale: state.circleScale,
-                                circleOpacity: state.circleOpacity,
-                                circleBottomScale: state.circleBottomScale,
-                                circleBottomOpacity: state.circleBottomOpacity,
-                                showTopCircle: state.selectedPattern.phases
-                                    .any((p) => p.type == PhaseType.holdIn),
-                                showBottomCircle: state.selectedPattern.phases
-                                    .any((p) => p.type == PhaseType.holdOut),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
+                      ((constraints.maxHeight - dotsAreaHeight) * 0.40).clamp(
+                        130.0,
+                        300.0,
+                      );
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: Center(
+                          child: BlocBuilder<BreathingBloc, BreathingState>(
+                            builder: (context, state) {
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _phaseLabel(
+                                      state.status,
+                                      state.currentPhase,
+                                    ),
+                                    style: typography.phaseLabel,
+                                  ),
+                                  SizedBox(height: spacing.s),
+                                  Text(
+                                    '${state.phaseSecondsRemaining}s',
+                                    style: typography.countdown,
+                                  ),
+                                  SizedBox(height: spacing.l),
+                                  SizedBox(
+                                    width: animHeight * 0.375,
+                                    child: BreathingAnimationWidget(
+                                      height: animHeight,
+                                      fillLevel: state.fillLevel,
+                                      isAnimating:
+                                          state.status == SessionStatus.playing,
+                                      circleScale: state.circleScale,
+                                      circleOpacity: state.circleOpacity,
+                                      circleBottomScale:
+                                          state.circleBottomScale,
+                                      circleBottomOpacity:
+                                          state.circleBottomOpacity,
+                                      isExtendedExhale: state.isExtendedExhale,
+                                      deepZoneFill: state.deepZoneFill,
+                                      showTopCircle: state
+                                          .selectedPattern
+                                          .phases
+                                          .any(
+                                            (p) => p.type == PhaseType.holdIn,
+                                          ),
+                                      showBottomCircle: state
+                                          .selectedPattern
+                                          .phases
+                                          .any(
+                                            (p) => p.type == PhaseType.holdOut,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      BlocBuilder<BreathingBloc, BreathingState>(
+                        buildWhen: (prev, curr) =>
+                            prev.currentCycle != curr.currentCycle ||
+                            prev.selectedPattern != curr.selectedPattern,
+                        builder: (context, dotState) => Padding(
+                          padding: EdgeInsets.only(bottom: spacing.m),
+                          child: CycleDotRow(
+                            totalCycles: dotState.selectedPattern.defaultCycles,
+                            currentCycle: dotState.currentCycle,
+                            extendedExhaleInterval:
+                                dotState.selectedPattern.extendedExhaleInterval,
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 },
               ),
@@ -131,15 +173,15 @@ class _BreathingSessionView extends StatelessWidget {
                     buildWhen: (prev, curr) => prev.status != curr.status,
                     builder: (context, state) => PlaybackControls(
                       status: state.status,
-                      onPlay: () => context
-                          .read<BreathingBloc>()
-                          .add(const PlayPressed()),
-                      onPause: () => context
-                          .read<BreathingBloc>()
-                          .add(const PausePressed()),
-                      onReset: () => context
-                          .read<BreathingBloc>()
-                          .add(const ResetPressed()),
+                      onPlay: () => context.read<BreathingBloc>().add(
+                        const PlayPressed(),
+                      ),
+                      onPause: () => context.read<BreathingBloc>().add(
+                        const PausePressed(),
+                      ),
+                      onReset: () => context.read<BreathingBloc>().add(
+                        const ResetPressed(),
+                      ),
                     ),
                   ),
                   Align(
@@ -189,6 +231,7 @@ class _BreathingSessionView extends StatelessWidget {
       PhaseType.inhale => 'INHALE',
       PhaseType.holdIn => 'HOLD',
       PhaseType.exhale => 'EXHALE',
+      PhaseType.extendedExhale => 'DEEP EXHALE',
       PhaseType.holdOut => 'HOLD',
     };
   }

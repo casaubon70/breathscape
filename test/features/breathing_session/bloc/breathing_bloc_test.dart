@@ -261,6 +261,240 @@ void main() {
     );
   });
 
+  group('BreathingBloc – Extended Exhale', () {
+    const extPattern = BreathingPattern(
+      name: 'Extended Test',
+      defaultCycles: 6,
+      extendedExhaleInterval: 3,
+      phases: [
+        BreathingPhase(type: PhaseType.inhale, duration: Duration(seconds: 4)),
+        BreathingPhase(type: PhaseType.exhale, duration: Duration(seconds: 4)),
+      ],
+    );
+
+    blocTest<BreathingBloc, BreathingState>(
+      'cycle 1: exhale → normal exhale (no extended)',
+      build: () => BreathingBloc(pattern: extPattern),
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const PhaseCompleted()), // → exhale on cycle 1
+      skip: 1,
+      expect: () => [
+        isA<BreathingState>()
+            .having((s) => s.currentPhase, 'phase', PhaseType.exhale)
+            .having((s) => s.isExtendedExhale, 'isExtendedExhale', false)
+            .having((s) => s.phaseSecondsRemaining, 'seconds', 4),
+      ],
+    );
+
+    blocTest<BreathingBloc, BreathingState>(
+      'cycle 3: exhale → extendedExhale with +2 s duration',
+      build: () => BreathingBloc(pattern: extPattern),
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const PhaseCompleted()) // exhale c1
+        ..add(const PhaseCompleted()) // inhale c2
+        ..add(const PhaseCompleted()) // exhale c2
+        ..add(const PhaseCompleted()) // inhale c3
+        ..add(const PhaseCompleted()), // exhale c3 → should be extended
+      skip: 1,
+      expect: () => [
+        isA<BreathingState>().having(
+          (s) => s.currentPhase,
+          'phase',
+          PhaseType.exhale,
+        ), // c1 exhale
+        isA<BreathingState>()
+            .having((s) => s.currentPhase, 'phase', PhaseType.inhale)
+            .having((s) => s.currentCycle, 'cycle', 2),
+        isA<BreathingState>().having(
+          (s) => s.currentPhase,
+          'phase',
+          PhaseType.exhale,
+        ), // c2 exhale
+        isA<BreathingState>()
+            .having((s) => s.currentPhase, 'phase', PhaseType.inhale)
+            .having((s) => s.currentCycle, 'cycle', 3),
+        isA<BreathingState>()
+            .having((s) => s.currentPhase, 'phase', PhaseType.extendedExhale)
+            .having((s) => s.isExtendedExhale, 'isExtendedExhale', true)
+            .having((s) => s.phaseSecondsRemaining, 'seconds', 6),
+      ],
+    );
+
+    blocTest<BreathingBloc, BreathingState>(
+      'cycle 3 via Tick: middle fills 1→0 at threshold, deep zone fills after',
+      build: () => BreathingBloc(pattern: extPattern),
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale c1
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → inhale c2
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale c2
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → inhale c3
+        ..add(
+          const BreathingTickUpdated(Duration(seconds: 4)),
+        ) // → extendedExhale c3 (start)
+        ..add(
+          const BreathingTickUpdated(Duration(seconds: 2)),
+        ), // 2/6 s, below 4/6 threshold
+      skip: 1,
+      expect: () => [
+        isA<BreathingState>().having(
+          (s) => s.currentPhase,
+          'phase',
+          PhaseType.exhale,
+        ),
+        isA<BreathingState>()
+            .having((s) => s.currentPhase, 'phase', PhaseType.inhale)
+            .having((s) => s.currentCycle, 'cycle', 2),
+        isA<BreathingState>().having(
+          (s) => s.currentPhase,
+          'phase',
+          PhaseType.exhale,
+        ),
+        isA<BreathingState>()
+            .having((s) => s.currentPhase, 'phase', PhaseType.inhale)
+            .having((s) => s.currentCycle, 'cycle', 3),
+        // phase start: fillLevel 1.0, deepZoneFill 0.0
+        isA<BreathingState>()
+            .having((s) => s.currentPhase, 'phase', PhaseType.extendedExhale)
+            .having((s) => s.fillLevel, 'fillLevel', 1.0)
+            .having((s) => s.deepZoneFill, 'deepZoneFill', 0.0),
+        // 2 s in → progress 2/6 ≈ 0.333, threshold = 0.75
+        // fillLevel = 1 - (1/3)/0.75 = 1 - 4/9 ≈ 0.556; deepZoneFill = 0
+        isA<BreathingState>()
+            .having((s) => s.currentPhase, 'phase', PhaseType.extendedExhale)
+            .having((s) => s.fillLevel, 'fillLevel', closeTo(0.556, 0.001))
+            .having((s) => s.deepZoneFill, 'deepZoneFill', closeTo(0.0, 0.001)),
+      ],
+    );
+
+    blocTest<BreathingBloc, BreathingState>(
+      'cycle 3: deepZoneFill grows after middle zone is empty',
+      build: () => BreathingBloc(pattern: extPattern),
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale c1
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → inhale c2
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale c2
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → inhale c3
+        ..add(
+          const BreathingTickUpdated(Duration(seconds: 4)),
+        ) // → extendedExhale c3
+        ..add(
+          const BreathingTickUpdated(Duration(seconds: 5)),
+        ), // 5 s in, progress 5/6 > threshold 0.75
+      skip: 6, // skip play + 4 phase transitions + extendedExhale start
+      expect: () => [
+        // 5 s in → progress 5/6 ≈ 0.833, threshold = 0.75
+        // fillLevel = 0.0 (clamped); deepZoneFill = (5/6-3/4)/(1/4) = 1/3 ≈ 0.333
+        isA<BreathingState>()
+            .having((s) => s.fillLevel, 'fillLevel', closeTo(0.0, 0.001))
+            .having(
+              (s) => s.deepZoneFill,
+              'deepZoneFill',
+              closeTo(0.333, 0.001),
+            ),
+      ],
+    );
+
+    blocTest<BreathingBloc, BreathingState>(
+      'isExtendedExhale resets to false on next inhale',
+      build: () => BreathingBloc(pattern: extPattern),
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const PhaseCompleted()) // exhale c1
+        ..add(const PhaseCompleted()) // inhale c2
+        ..add(const PhaseCompleted()) // exhale c2
+        ..add(const PhaseCompleted()) // inhale c3
+        ..add(const PhaseCompleted()) // extendedExhale c3
+        ..add(const PhaseCompleted()), // inhale c4
+      skip: 6,
+      expect: () => [
+        isA<BreathingState>()
+            .having((s) => s.currentPhase, 'phase', PhaseType.inhale)
+            .having((s) => s.isExtendedExhale, 'isExtendedExhale', false)
+            .having((s) => s.currentCycle, 'cycle', 4),
+      ],
+    );
+
+    blocTest<BreathingBloc, BreathingState>(
+      'inhale after deep exhale starts with deepZoneFill=1, fillLevel=0',
+      build: () => BreathingBloc(pattern: extPattern),
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const PhaseCompleted()) // exhale c1
+        ..add(const PhaseCompleted()) // inhale c2
+        ..add(const PhaseCompleted()) // exhale c2
+        ..add(const PhaseCompleted()) // inhale c3
+        ..add(const PhaseCompleted()) // extendedExhale c3
+        ..add(const PhaseCompleted()), // inhale c4 ← starts from deep zone
+      skip: 6,
+      expect: () => [
+        isA<BreathingState>()
+            .having((s) => s.currentPhase, 'phase', PhaseType.inhale)
+            .having((s) => s.fillLevel, 'fillLevel', 0.0)
+            .having((s) => s.deepZoneFill, 'deepZoneFill', 1.0),
+      ],
+    );
+
+    blocTest<BreathingBloc, BreathingState>(
+      'deep inhale via Tick: lower zone clears first, then middle zone fills',
+      build: () => BreathingBloc(pattern: extPattern),
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale c1
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → inhale c2
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale c2
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → inhale c3
+        ..add(
+          const BreathingTickUpdated(Duration(seconds: 4)),
+        ) // → extendedExhale c3
+        ..add(
+          const BreathingTickUpdated(Duration(seconds: 6)),
+        ) // → inhale c4 (extendedExhale 6 s done)
+        ..add(
+          const BreathingTickUpdated(Duration(seconds: 1)),
+        ), // 1 s into 4 s inhale → progress 0.25 = threshold
+      skip: 7, // skip play + 5 transitions + inhale-c4 start
+      expect: () => [
+        // At progress=0.25 (threshold): lower zone just cleared, middle not yet started
+        isA<BreathingState>()
+            .having((s) => s.currentPhase, 'phase', PhaseType.inhale)
+            .having((s) => s.fillLevel, 'fillLevel', closeTo(0.0, 0.001))
+            .having((s) => s.deepZoneFill, 'deepZoneFill', closeTo(0.0, 0.001)),
+      ],
+    );
+
+    blocTest<BreathingBloc, BreathingState>(
+      'deep inhale: at progress=0.625 fillLevel=0.5, deepZoneFill=0',
+      build: () => BreathingBloc(pattern: extPattern),
+      act: (bloc) => bloc
+        ..add(const PlayPressed())
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale c1
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → inhale c2
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale c2
+        ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → inhale c3
+        ..add(
+          const BreathingTickUpdated(Duration(seconds: 4)),
+        ) // → extendedExhale c3
+        ..add(
+          const BreathingTickUpdated(Duration(seconds: 6)),
+        ) // → inhale c4 (extendedExhale 6 s done)
+        ..add(
+          const BreathingTickUpdated(Duration(milliseconds: 2500)),
+        ), // 2.5 s of 4 s → progress 0.625
+      skip: 7, // skip play + 5 transitions + inhale-c4 start
+      expect: () => [
+        // progress=0.625 → fillLevel = (0.625-0.25)/0.75 = 0.5, deepZoneFill = 0
+        isA<BreathingState>()
+            .having((s) => s.currentPhase, 'phase', PhaseType.inhale)
+            .having((s) => s.fillLevel, 'fillLevel', closeTo(0.5, 0.001))
+            .having((s) => s.deepZoneFill, 'deepZoneFill', closeTo(0.0, 0.001)),
+      ],
+    );
+  });
+
   group('BreathingBloc – Ticker-Logik (Scheibe 4)', () {
     blocTest<BreathingBloc, BreathingState>(
       'Tick mit halbem Delta → fillLevel 0.5 (Inhale-Phase)',

@@ -95,8 +95,9 @@ void main() {
       ),
     );
 
-    testWidgets('completed: Play ausgegraut, Replay-Button sichtbar',
-        (tester) async {
+    testWidgets('completed: Play ausgegraut, Replay-Button sichtbar', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildControls(SessionStatus.completed));
 
       expect(find.byIcon(Icons.play_circle), findsOneWidget);
@@ -113,8 +114,9 @@ void main() {
       expect(find.byIcon(Icons.refresh), findsNothing);
     });
 
-    testWidgets('playing: zeigt Pause-Icon und Replay-Reset-Icon',
-        (tester) async {
+    testWidgets('playing: zeigt Pause-Icon und Replay-Reset-Icon', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildControls(SessionStatus.playing));
 
       expect(find.byIcon(Icons.pause_circle), findsOneWidget);
@@ -124,17 +126,19 @@ void main() {
 
     testWidgets('Tap Replay ruft onReset auf', (tester) async {
       var resetCalled = false;
-      await tester.pumpWidget(MaterialApp(
-        theme: darkOceanTheme.toThemeData(),
-        home: Scaffold(
-          body: PlaybackControls(
-            status: SessionStatus.completed,
-            onPlay: () {},
-            onPause: () {},
-            onReset: () => resetCalled = true,
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: darkOceanTheme.toThemeData(),
+          home: Scaffold(
+            body: PlaybackControls(
+              status: SessionStatus.completed,
+              onPlay: () {},
+              onPause: () {},
+              onReset: () => resetCalled = true,
+            ),
           ),
         ),
-      ));
+      );
 
       await tester.tap(find.byIcon(Icons.replay));
       expect(resetCalled, isTrue);

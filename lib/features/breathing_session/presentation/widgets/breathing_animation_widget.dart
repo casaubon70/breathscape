@@ -13,6 +13,8 @@ class BreathingAnimationWidget extends StatelessWidget {
     required this.circleBottomOpacity,
     this.showTopCircle = true,
     this.showBottomCircle = true,
+    this.isExtendedExhale = false,
+    this.deepZoneFill = 0.0,
     super.key,
   });
 
@@ -25,6 +27,13 @@ class BreathingAnimationWidget extends StatelessWidget {
   final double circleBottomOpacity;
   final bool showTopCircle;
   final bool showBottomCircle;
+
+  /// When true, the lower zone is part of the deep-exhale animation.
+  final bool isExtendedExhale;
+
+  /// 0.0–1.0: how much of the lower surfaceDim zone has been emptied
+  /// during the extension phase of a deep exhale (grows from top to bottom).
+  final double deepZoneFill;
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +76,22 @@ class BreathingAnimationWidget extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Flexible(flex: 2, child: Container(color: colors.surfaceDim)),
+                  Flexible(
+                    flex: 2,
+                    child: Stack(
+                      children: [
+                        Container(color: colors.surfaceDim),
+                        if (deepZoneFill > 0.0)
+                          Align(
+                            alignment: Alignment.topCenter,
+                            child: FractionallySizedBox(
+                              heightFactor: deepZoneFill.clamp(0.0, 1.0),
+                              child: Container(color: colors.accent),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
