@@ -105,7 +105,7 @@ void main() {
         seed: () => const AudioState(status: AudioStatus.playing),
         act: (bloc) => bloc.add(const VoiceMuteToggled()),
         expect: () => [
-          const AudioState(status: AudioStatus.idle, isMuted: true),
+          const AudioState(isMuted: true),
         ],
         verify: (_) {
           verify(() => mockPlayer.stop()).called(1);
