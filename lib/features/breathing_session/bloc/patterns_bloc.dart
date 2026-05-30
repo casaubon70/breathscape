@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:breathscape/features/breathing_session/bloc/patterns_event.dart';
 import 'package:breathscape/features/breathing_session/bloc/patterns_state.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
+import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
 import 'package:breathscape/features/breathing_session/domain/pattern_overrides.dart';
 import 'package:breathscape/features/breathing_session/domain/pattern_overrides_repository.dart';
 import 'package:breathscape/features/breathing_session/domain/patterns_repository.dart';
@@ -26,8 +27,8 @@ class PatternsBloc extends Bloc<PatternsEvent, PatternsState> {
   }
 
   /// Minimum and maximum editable duration for a single phase, in seconds.
-  static const int minSeconds = 1;
-  static const int maxSeconds = 99;
+  static const int minSeconds = kMinPhaseDurationSeconds;
+  static const int maxSeconds = kMaxPhaseDurationSeconds;
 
   final PatternOverridesRepository _overridesRepository;
   final Future<List<BreathingPattern>> Function() _baseLoader;

@@ -41,7 +41,8 @@ void main() {
     await tester.tap(find.byIcon(FontAwesomeIcons.sliders.data));
     await tester.pumpAndSettle();
 
-    expect(find.byType(PhaseAdjuster), findsOneWidget);
+    // In edit mode the adjuster rows appear (one per phase).
+    expect(find.byType(PhaseAdjusterRow), findsWidgets);
     expect(find.text('INHALE'), findsOneWidget);
 
     // Increase the inhale duration twice (4 → 6).
@@ -50,13 +51,14 @@ void main() {
     await tester.tap(find.byIcon(Icons.add_circle_outline).first);
     await tester.pumpAndSettle();
 
-    expect(find.text('6s'), findsOneWidget);
+    // '6s' appears in both the phase countdown and the inhale stepper.
+    expect(find.text('6s'), findsWidgets);
 
     // Leave edit mode — the session now starts from the edited inhale duration.
     await tester.tap(find.byIcon(FontAwesomeIcons.sliders.data));
     await tester.pumpAndSettle();
 
-    expect(find.byType(PhaseAdjuster), findsNothing);
+    expect(find.byType(PhaseAdjusterRow), findsNothing);
     expect(find.text('READY'), findsOneWidget);
     expect(find.text('6s'), findsOneWidget);
   });

@@ -35,10 +35,16 @@ class BreathingAnimationWidget extends StatelessWidget {
   /// during the extension phase of a deep exhale (grows from top to bottom).
   final double deepZoneFill;
 
+  /// Circle diameter as a fraction of bar height.
+  static const double kCircleRatio = 0.375;
+
+  /// Gap between circle and bar (px).
+  static const double kBarGap = 16;
+
   @override
   Widget build(BuildContext context) {
     final colors = context.bTheme.colors;
-    final circleSize = height * 0.375;
+    final circleSize = height * kCircleRatio;
     final radius = height * 0.075;
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -47,7 +53,7 @@ class BreathingAnimationWidget extends StatelessWidget {
           opacity: showTopCircle ? 1.0 : 0.0,
           child: _buildCircle(circleScale, circleOpacity, circleSize, colors),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: kBarGap),
         SizedBox(
           height: height,
           child: DecoratedBox(
@@ -97,7 +103,7 @@ class BreathingAnimationWidget extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: kBarGap),
         Opacity(
           opacity: showBottomCircle ? 1.0 : 0.0,
           child: _buildCircle(

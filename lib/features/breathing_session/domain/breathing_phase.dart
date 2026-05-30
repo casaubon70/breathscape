@@ -2,6 +2,11 @@ import 'package:equatable/equatable.dart';
 
 enum PhaseType { inhale, holdIn, exhale, extendedExhale, holdOut }
 
+/// Valid editable range for a single phase duration, shared between domain
+/// validation (PatternsBloc) and UI controls (PhaseAdjuster).
+const int kMinPhaseDurationSeconds = 1;
+const int kMaxPhaseDurationSeconds = 99;
+
 class BreathingPhase extends Equatable {
   const BreathingPhase({required this.type, required this.duration});
 

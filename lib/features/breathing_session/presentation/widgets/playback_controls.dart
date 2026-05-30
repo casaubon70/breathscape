@@ -10,7 +10,7 @@ class PlaybackControls extends StatelessWidget {
     required this.status,
     required this.onPlay,
     required this.onPause,
-    required this.onReset,
+    this.onReset,
     this.onSettings,
     super.key,
   });
@@ -18,7 +18,10 @@ class PlaybackControls extends StatelessWidget {
   final SessionStatus status;
   final VoidCallback onPlay;
   final VoidCallback onPause;
-  final VoidCallback onReset;
+
+  /// Session-reset callback. Pass null to hide the reset icon (e.g. in edit
+  /// mode where a separate pattern-reset affordance is shown instead).
+  final VoidCallback? onReset;
   final VoidCallback? onSettings;
 
   @override
@@ -72,27 +75,29 @@ class PlaybackControls extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: EdgeInsets.only(left: spacing.s),
-              child: IconButton(
-                color: isCompleted ? Colors.black : colors.textHint,
-                style: isCompleted
-                    ? IconButton.styleFrom(
-                        backgroundColor: colors.signal,
-                        padding: EdgeInsets.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      )
-                    : IconButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                icon: const FaIcon(FontAwesomeIcons.arrowRotateLeft),
-                onPressed: onReset,
-              ),
-            ),
-          ),
+          child: onReset == null
+              ? const SizedBox.shrink()
+              : Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: EdgeInsets.only(left: spacing.s),
+                    child: IconButton(
+                      color: isCompleted ? Colors.black : colors.textHint,
+                      style: isCompleted
+                          ? IconButton.styleFrom(
+                              backgroundColor: colors.signal,
+                              padding: EdgeInsets.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            )
+                          : IconButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                      icon: const FaIcon(FontAwesomeIcons.arrowRotateLeft),
+                      onPressed: onReset,
+                    ),
+                  ),
+                ),
         ),
       ],
     );

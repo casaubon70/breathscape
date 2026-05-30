@@ -33,6 +33,17 @@ final class PatternSelected extends BreathingEvent {
   List<Object?> get props => [pattern];
 }
 
+/// Aktualisiert nur die Phasendauern des laufenden Patterns ohne Session-Reset.
+/// Wird beim Live-Editing von Phasenlängen während einer Session verwendet.
+final class PatternDurationUpdated extends BreathingEvent {
+  const PatternDurationUpdated(this.pattern);
+
+  final BreathingPattern pattern;
+
+  @override
+  List<Object?> get props => [pattern];
+}
+
 /// Internes Event – wird ausschließlich vom Ticker im BreathingBloc gefeuert.
 final class BreathingTickUpdated extends BreathingEvent {
   const BreathingTickUpdated(this.delta);

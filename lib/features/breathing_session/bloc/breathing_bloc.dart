@@ -19,6 +19,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     on<PausePressed>(_onPausePressed);
     on<ResetPressed>(_onResetPressed);
     on<PatternSelected>(_onPatternSelected);
+    on<PatternDurationUpdated>(_onPatternDurationUpdated);
     on<PhaseCompleted>(_onPhaseCompleted);
     on<BreathingTickUpdated>(_onTickUpdated);
   }
@@ -137,6 +138,28 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
         selectedPattern: _pattern,
         phaseSecondsRemaining: _pattern.phases.first.duration.inSeconds,
         sessionSecondsRemaining: _totalSessionSeconds(),
+      ),
+    );
+  }
+
+  void _onPatternDurationUpdated(
+    PatternDurationUpdated event,
+    Emitter<BreathingState> emit,
+  ) {
+    _pattern = event.pattern;
+    // Clamp accumulator so that reducing a phase duration below elapsed time
+    // causes the phase to complete on the next tick rather than carrying
+    // overshoot that could cascade-skip subsequent phases.
+    final newDuration =
+        _effectivePhase(_phaseIndex, state.currentCycle).duration;
+    if (_phaseAccumulated >= newDuration) {
+      _phaseAccumulated = newDuration - const Duration(microseconds: 1);
+    }
+    emit(
+      state.copyWith(
+        selectedPattern: _pattern,
+        phaseSecondsRemaining: _secondsRemaining(state.currentCycle),
+        sessionSecondsRemaining: _sessionSecondsRemaining(state.currentCycle),
       ),
     );
   }
