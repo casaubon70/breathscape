@@ -27,9 +27,17 @@ class PatternOverridesRepository {
   /// remote copy wins it is written through to the local store.
   Future<PatternOverrides> load() async {
     final local = _parse(await _local.read(storageKey));
-    final remote = _remote == null
-        ? null
-        : _parse(await _remote.read(storageKey));
+    // A missing/misconfigured native sync provider must never block loading —
+    // fall back to the local copy if the remote read fails.
+    PatternOverrides? remote;
+    final remoteStore = _remote;
+    if (remoteStore != null) {
+      try {
+        remote = _parse(await remoteStore.read(storageKey));
+      } on Object {
+        remote = null;
+      }
+    }
 
     if (remote != null && remote.updatedAt > local.updatedAt) {
       await _local.write(storageKey, jsonEncode(remote.toJson()));
@@ -42,7 +50,11 @@ class PatternOverridesRepository {
   Future<void> save(PatternOverrides overrides) async {
     final encoded = jsonEncode(overrides.toJson());
     await _local.write(storageKey, encoded);
-    await _remote?.write(storageKey, encoded);
+    try {
+      await _remote?.write(storageKey, encoded);
+    } on Object {
+      // Best effort: a remote write failure leaves the local copy intact.
+    }
   }
 
   /// Emits overrides received from another device, writing each through to the
@@ -50,10 +62,13 @@ class PatternOverridesRepository {
   Stream<PatternOverrides> get changes {
     final remote = _remote;
     if (remote == null) return const Stream.empty();
-    return remote.watch(storageKey).asyncMap((raw) async {
-      await _local.write(storageKey, raw);
-      return _parse(raw);
-    });
+    return remote
+        .watch(storageKey)
+        .asyncMap((raw) async {
+          await _local.write(storageKey, raw);
+          return _parse(raw);
+        })
+        .handleError((_) {});
   }
 
   PatternOverrides _parse(String? raw) {

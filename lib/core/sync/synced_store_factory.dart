@@ -11,6 +11,9 @@ import 'package:flutter/foundation.dart';
 /// - Apple (iOS/macOS): iCloud key-value store (no sign-in required).
 /// - Android: Google Drive appDataFolder (requires Google sign-in).
 SyncedKeyValueStore? createRemoteSyncStore() {
+  // On web `defaultTargetPlatform` reports the host OS (e.g. macOS), so guard
+  // explicitly — neither native store has a web implementation.
+  if (kIsWeb) return null;
   switch (defaultTargetPlatform) {
     case TargetPlatform.iOS:
     case TargetPlatform.macOS:

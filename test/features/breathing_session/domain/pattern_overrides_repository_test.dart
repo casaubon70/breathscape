@@ -27,10 +27,58 @@ class FakeStore implements SyncedKeyValueStore {
   void emitRemote(String raw) => _controller.add(raw);
 }
 
+/// Remote store whose every operation throws — mimics a missing native sync
+/// provider (e.g. the iCloud MethodChannel on web).
+class ThrowingStore implements SyncedKeyValueStore {
+  @override
+  Future<String?> read(String key) async => throw Exception('no plugin');
+
+  @override
+  Future<void> write(String key, String value) async =>
+      throw Exception('no plugin');
+
+  @override
+  Stream<String> watch(String key) =>
+      Stream<String>.error(Exception('no plugin'));
+}
+
 String encode(PatternOverrides overrides) => jsonEncode(overrides.toJson());
 
 void main() {
   group('PatternOverridesRepository', () {
+    test('load falls back to local when the remote read throws', () async {
+      const local = PatternOverrides(
+        byPattern: {
+          'Box': {0: 5},
+        },
+        updatedAt: 100,
+      );
+      final repo = PatternOverridesRepository(
+        local: FakeStore(encode(local)),
+        remote: ThrowingStore(),
+      );
+
+      expect(await repo.load(), local);
+    });
+
+    test('save still succeeds locally when the remote write throws', () async {
+      const overrides = PatternOverrides(
+        byPattern: {
+          'Box': {0: 7},
+        },
+        updatedAt: 42,
+      );
+      final localStore = FakeStore();
+      final repo = PatternOverridesRepository(
+        local: localStore,
+        remote: ThrowingStore(),
+      );
+
+      await repo.save(overrides);
+
+      expect(localStore.value, encode(overrides));
+    });
+
     test('load returns empty overrides when both stores are empty', () async {
       final repo = PatternOverridesRepository(
         local: FakeStore(),
