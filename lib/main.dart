@@ -2,9 +2,12 @@ import 'package:breathscape/core/theme/bloc/theme_bloc.dart';
 import 'package:breathscape/core/theme/bloc/theme_state.dart';
 import 'package:breathscape/features/breathing_session/presentation/breathing_session_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(const BreathscapeApp());
 }
 
