@@ -7,6 +7,8 @@ import 'package:breathscape/features/breathing_session/presentation/widgets/brea
 import 'package:breathscape/features/breathing_session/presentation/widgets/playback_controls.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const _testPatterns = [
   BreathingPattern(
@@ -26,6 +28,8 @@ Widget _buildPage() => MaterialApp(
 );
 
 void main() {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   group('BreathingSessionPage', () {
     testWidgets('renders AnimationWidget und PlaybackControls', (tester) async {
       await tester.pumpWidget(_buildPage());
@@ -101,7 +105,10 @@ void main() {
       await tester.pumpWidget(buildControls(SessionStatus.completed));
 
       expect(find.byIcon(Icons.play_circle), findsOneWidget);
-      expect(find.byIcon(Icons.replay), findsOneWidget);
+      expect(
+        find.byIcon(FontAwesomeIcons.arrowRotateLeft.data),
+        findsOneWidget,
+      );
       expect(find.byIcon(Icons.pause_circle), findsNothing);
       expect(find.byIcon(Icons.refresh), findsNothing);
     });
@@ -110,7 +117,10 @@ void main() {
       await tester.pumpWidget(buildControls(SessionStatus.idle));
 
       expect(find.byIcon(Icons.play_circle), findsOneWidget);
-      expect(find.byIcon(Icons.replay), findsOneWidget);
+      expect(
+        find.byIcon(FontAwesomeIcons.arrowRotateLeft.data),
+        findsOneWidget,
+      );
       expect(find.byIcon(Icons.refresh), findsNothing);
     });
 
@@ -120,7 +130,10 @@ void main() {
       await tester.pumpWidget(buildControls(SessionStatus.playing));
 
       expect(find.byIcon(Icons.pause_circle), findsOneWidget);
-      expect(find.byIcon(Icons.replay), findsOneWidget);
+      expect(
+        find.byIcon(FontAwesomeIcons.arrowRotateLeft.data),
+        findsOneWidget,
+      );
       expect(find.byIcon(Icons.refresh), findsNothing);
     });
 
@@ -140,7 +153,7 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byIcon(Icons.replay));
+      await tester.tap(find.byIcon(FontAwesomeIcons.arrowRotateLeft.data));
       expect(resetCalled, isTrue);
     });
   });

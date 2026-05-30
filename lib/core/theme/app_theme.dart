@@ -21,6 +21,7 @@ final class BreathscapeTheme {
   ThemeData toThemeData() {
     return ThemeData.dark().copyWith(
       scaffoldBackgroundColor: colors.background,
+      iconTheme: const IconThemeData(size: 22),
       extensions: [
         BreathscapeThemeExtension(
           colors: colors,

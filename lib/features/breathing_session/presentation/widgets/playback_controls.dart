@@ -1,6 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:breathscape/core/theme/app_theme.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class PlaybackControls extends StatelessWidget {
   const PlaybackControls({
@@ -36,13 +39,16 @@ class PlaybackControls extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.only(right: spacing.s),
               child: IconButton(
-                iconSize: 32,
+                iconSize: 22,
                 color: colors.textHint,
                 style: IconButton.styleFrom(
                   padding: EdgeInsets.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                icon: const Icon(Icons.settings),
+                icon: Transform.rotate(
+                  angle: math.pi / 2,
+                  child: const FaIcon(FontAwesomeIcons.sliders),
+                ),
                 onPressed: onSettings,
               ),
             ),
@@ -71,7 +77,6 @@ class PlaybackControls extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.only(left: spacing.s),
               child: IconButton(
-                iconSize: 32,
                 color: isCompleted ? Colors.black : colors.textHint,
                 style: isCompleted
                     ? IconButton.styleFrom(
@@ -83,7 +88,7 @@ class PlaybackControls extends StatelessWidget {
                         padding: EdgeInsets.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                icon: const Icon(Icons.replay),
+                icon: const FaIcon(FontAwesomeIcons.arrowRotateLeft),
                 onPressed: onReset,
               ),
             ),
