@@ -291,6 +291,47 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
     );
   }
 
+  // buildWhen for the animation BlocBuilder — fires every frame during play.
+  static bool _isAnimChange(BreathingState prev, BreathingState curr) =>
+      prev.fillLevel != curr.fillLevel ||
+      prev.circleScale != curr.circleScale ||
+      prev.circleOpacity != curr.circleOpacity ||
+      prev.circleBottomScale != curr.circleBottomScale ||
+      prev.circleBottomOpacity != curr.circleBottomOpacity ||
+      prev.currentPhase != curr.currentPhase ||
+      prev.deepZoneFill != curr.deepZoneFill ||
+      prev.status != curr.status ||
+      prev.selectedPattern != curr.selectedPattern;
+
+  // Builds the BreathingAnimationWidget wrapped in its SizedBox.
+  // Pure function of state — no context needed.
+  static Widget _buildAnimWidget(
+    BreathingState state,
+    double animHeight,
+    double animWidth,
+  ) {
+    return SizedBox(
+      width: animWidth,
+      child: BreathingAnimationWidget(
+        height: animHeight,
+        fillLevel: state.fillLevel,
+        isAnimating: state.status == SessionStatus.playing,
+        circleScale: state.circleScale,
+        circleOpacity: state.circleOpacity,
+        circleBottomScale: state.circleBottomScale,
+        circleBottomOpacity: state.circleBottomOpacity,
+        isExtendedExhale: state.isExtendedExhale,
+        deepZoneFill: state.deepZoneFill,
+        showTopCircle: state.selectedPattern.phases.any(
+          (p) => p.type == PhaseType.holdIn,
+        ),
+        showBottomCircle: state.selectedPattern.phases.any(
+          (p) => p.type == PhaseType.holdOut,
+        ),
+      ),
+    );
+  }
+
   Widget _buildSessionArea(
     BuildContext context,
     BoxConstraints constraints,
@@ -300,100 +341,133 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
     final typography = context.bTheme.typography;
     final animWidth = animHeight * BreathingAnimationWidget.kCircleRatio;
 
-    return BlocBuilder<BreathingBloc, BreathingState>(
-      buildWhen: (prev, curr) =>
-          prev.fillLevel != curr.fillLevel ||
-          prev.phaseSecondsRemaining != curr.phaseSecondsRemaining ||
-          prev.currentPhase != curr.currentPhase ||
-          prev.status != curr.status ||
-          prev.selectedPattern != curr.selectedPattern ||
-          prev.circleScale != curr.circleScale ||
-          prev.circleOpacity != curr.circleOpacity ||
-          prev.circleBottomScale != curr.circleBottomScale ||
-          prev.circleBottomOpacity != curr.circleBottomOpacity ||
-          prev.isExtendedExhale != curr.isExtendedExhale ||
-          prev.deepZoneFill != curr.deepZoneFill,
-      builder: (context, state) {
-        final showTopCircle = state.selectedPattern.phases.any(
-          (p) => p.type == PhaseType.holdIn,
-        );
-        final showBottomCircle = state.selectedPattern.phases
-            .any((p) => p.type == PhaseType.holdOut);
-        final animWidget = SizedBox(
-          width: animWidth,
-          child: BreathingAnimationWidget(
-            height: animHeight,
-            fillLevel: state.fillLevel,
-            isAnimating: state.status == SessionStatus.playing,
-            circleScale: state.circleScale,
-            circleOpacity: state.circleOpacity,
-            circleBottomScale: state.circleBottomScale,
-            circleBottomOpacity: state.circleBottomOpacity,
-            isExtendedExhale: state.isExtendedExhale,
-            deepZoneFill: state.deepZoneFill,
-            showTopCircle: showTopCircle,
-            showBottomCircle: showBottomCircle,
+    // Each section has its own BlocBuilder so they rebuild independently:
+    // - phase info: fires ~once per second (phaseSecondsRemaining / phase change)
+    // - animation: fires every frame (fillLevel etc.)
+    // - adjusters (edit mode only): fires only when pattern changes
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        BlocBuilder<BreathingBloc, BreathingState>(
+          buildWhen: (prev, curr) =>
+              prev.phaseSecondsRemaining != curr.phaseSecondsRemaining ||
+              prev.currentPhase != curr.currentPhase ||
+              prev.status != curr.status,
+          builder: (context, state) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _phaseLabel(state.status, state.currentPhase),
+                style: typography.phaseLabel,
+              ),
+              SizedBox(height: spacing.s),
+              Text(
+                '${state.phaseSecondsRemaining}s',
+                style: typography.countdown,
+              ),
+            ],
           ),
-        );
-
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              _phaseLabel(state.status, state.currentPhase),
-              style: typography.phaseLabel,
-            ),
-            SizedBox(height: spacing.s),
-            Text(
-              '${state.phaseSecondsRemaining}s',
-              style: typography.countdown,
-            ),
-            SizedBox(height: spacing.l),
-            SizedBox(
-              width: constraints.maxWidth,
-              child: _editMode
-                  ? _buildEditRow(
-                      context, state, animWidget, animHeight,
-                      constraints.maxWidth, spacing,
-                    )
-                  : Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        animWidget,
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: SizedBox(
-                            width: (constraints.maxWidth - animWidth) / 2,
-                            child: const Center(child: VoiceMuteButton()),
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
-          ],
-        );
-      },
+        ),
+        SizedBox(height: spacing.l),
+        SizedBox(
+          width: constraints.maxWidth,
+          child: _editMode
+              ? _buildEditStack(
+                  context, animHeight, constraints.maxWidth, spacing,
+                )
+              : _buildNormalStack(
+                  context, animHeight, constraints.maxWidth, animWidth,
+                ),
+        ),
+      ],
     );
   }
 
-  /// Edit layout: animation centered, per-phase adjusters (label above stepper)
-  /// on the right, each aligned to its corresponding visual element.
-  Widget _buildEditRow(
+  /// Normal layout: animation centred with VoiceMuteButton to the right.
+  Widget _buildNormalStack(
     BuildContext context,
-    BreathingState state,
-    Widget animWidget,
+    double animHeight,
+    double maxWidth,
+    double animWidth,
+  ) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        BlocBuilder<BreathingBloc, BreathingState>(
+          buildWhen: _isAnimChange,
+          builder: (context, state) =>
+              _buildAnimWidget(state, animHeight, animWidth),
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: SizedBox(
+            width: (maxWidth - animWidth) / 2,
+            child: const Center(child: VoiceMuteButton()),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Edit layout: animation centred; adjuster panel to its right.
+  ///
+  /// Animation and adjusters are siblings in the same Stack so they hold
+  /// independent BlocBuilder subscriptions — the animation fires every frame
+  /// without triggering a rebuild of the adjuster rows, which only update
+  /// when the selected pattern changes.
+  Widget _buildEditStack(
+    BuildContext context,
     double animHeight,
     double maxWidth,
     BreathscapeSpacing spacing,
   ) {
-    // Animation column geometry — uses BreathingAnimationWidget constants as
-    // the single source of truth so layout stays in sync if they ever change.
+    final circleSize = animHeight * BreathingAnimationWidget.kCircleRatio;
+    const barGap = BreathingAnimationWidget.kBarGap;
+    final totalHeight = circleSize * 2 + barGap * 2 + animHeight;
+    final adjustersLeft = ((maxWidth + circleSize) / 2 + spacing.m)
+        .clamp(0.0, maxWidth - spacing.m);
+
+    return SizedBox(
+      height: totalHeight,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Animation: separate BlocBuilder that fires every frame.
+          Center(
+            child: BlocBuilder<BreathingBloc, BreathingState>(
+              buildWhen: _isAnimChange,
+              builder: (context, state) =>
+                  _buildAnimWidget(state, animHeight, circleSize),
+            ),
+          ),
+          // Adjusters: separate BlocBuilder that fires only on pattern change.
+          Positioned.fill(
+            child: BlocBuilder<BreathingBloc, BreathingState>(
+              buildWhen: (prev, curr) =>
+                  prev.selectedPattern != curr.selectedPattern,
+              builder: (context, state) => _buildAdjusterStack(
+                context, state, animHeight, adjustersLeft, spacing,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Builds the positioned adjuster rows as a Stack that fills its parent.
+  Widget _buildAdjusterStack(
+    BuildContext context,
+    BreathingState state,
+    double animHeight,
+    double adjustersLeft,
+    BreathscapeSpacing spacing,
+  ) {
     final circleSize = animHeight * BreathingAnimationWidget.kCircleRatio;
     const barGap = BreathingAnimationWidget.kBarGap;
     final barTop = circleSize + barGap;
-    final totalHeight = circleSize * 2 + barGap * 2 + animHeight;
+    const rowHalfHeight = 23.0;
 
-    // Center-Y for each phase type, from the top of the animation widget.
     double centerY(PhaseType type) => switch (type) {
       PhaseType.holdIn => circleSize * 0.5,
       PhaseType.inhale => barTop + animHeight * 0.3,
@@ -403,58 +477,43 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
       PhaseType.extendedExhale => barTop + animHeight * 0.7,
     };
 
-    // Stacked label (~16 px) + stepper (~30 px) = ~46 px total.
-    const rowHalfHeight = 23.0;
-
-    // Left edge of the adjuster area: right of centered animation.
-    // Clamped so right: spacing.m never yields a negative Positioned width.
-    final adjustersLeft = ((maxWidth + circleSize) / 2 + spacing.m)
-        .clamp(0.0, maxWidth - spacing.m);
-
-    return SizedBox(
-      height: totalHeight,
-      child: Stack(
-        // Clip.none lets adjuster rows extend beyond the SizedBox at large
-        // text scales without being hard-clipped.
-        clipBehavior: Clip.none,
-        children: [
-          Center(child: animWidget),
-          for (var i = 0; i < state.selectedPattern.phases.length; i++)
-            Positioned(
-              top: centerY(state.selectedPattern.phases[i].type) -
-                  rowHalfHeight,
-              left: adjustersLeft,
-              right: spacing.m,
-              child: PhaseAdjusterRow(
-                stacked: true,
-                phaseType: state.selectedPattern.phases[i].type,
-                seconds: state.selectedPattern.phases[i].duration.inSeconds,
-                canDecrease:
-                    state.selectedPattern.phases[i].duration.inSeconds >
-                        PatternsBloc.minSeconds,
-                canIncrease:
-                    state.selectedPattern.phases[i].duration.inSeconds <
-                        PatternsBloc.maxSeconds,
-                onDecrease: () => context.read<PatternsBloc>().add(
-                  PhaseSecondsEdited(
-                    patternName: state.selectedPattern.name,
-                    phaseIndex: i,
-                    seconds:
-                        state.selectedPattern.phases[i].duration.inSeconds - 1,
-                  ),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        for (var i = 0; i < state.selectedPattern.phases.length; i++)
+          Positioned(
+            top: centerY(state.selectedPattern.phases[i].type) - rowHalfHeight,
+            left: adjustersLeft,
+            right: spacing.m,
+            child: PhaseAdjusterRow(
+              stacked: true,
+              phaseType: state.selectedPattern.phases[i].type,
+              seconds: state.selectedPattern.phases[i].duration.inSeconds,
+              canDecrease:
+                  state.selectedPattern.phases[i].duration.inSeconds >
+                      PatternsBloc.minSeconds,
+              canIncrease:
+                  state.selectedPattern.phases[i].duration.inSeconds <
+                      PatternsBloc.maxSeconds,
+              onDecrease: () => context.read<PatternsBloc>().add(
+                PhaseSecondsEdited(
+                  patternName: state.selectedPattern.name,
+                  phaseIndex: i,
+                  seconds:
+                      state.selectedPattern.phases[i].duration.inSeconds - 1,
                 ),
-                onIncrease: () => context.read<PatternsBloc>().add(
-                  PhaseSecondsEdited(
-                    patternName: state.selectedPattern.name,
-                    phaseIndex: i,
-                    seconds:
-                        state.selectedPattern.phases[i].duration.inSeconds + 1,
-                  ),
+              ),
+              onIncrease: () => context.read<PatternsBloc>().add(
+                PhaseSecondsEdited(
+                  patternName: state.selectedPattern.name,
+                  phaseIndex: i,
+                  seconds:
+                      state.selectedPattern.phases[i].duration.inSeconds + 1,
                 ),
               ),
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 
