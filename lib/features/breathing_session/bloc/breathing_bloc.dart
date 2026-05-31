@@ -2,19 +2,36 @@ import 'package:breathscape/features/breathing_session/bloc/breathing_event.dart
 import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
+import 'package:breathscape/features/breathing_session/domain/pattern_migration.dart';
+import 'package:breathscape/features/breathing_session/domain/resolved_timeline.dart';
+import 'package:breathscape/features/breathing_session/domain/session_program.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
-  BreathingBloc({required BreathingPattern pattern})
-    : _pattern = pattern,
-      super(
-        BreathingState(
-          selectedPattern: pattern,
-          phaseSecondsRemaining: pattern.phases.first.duration.inSeconds,
-          sessionSecondsRemaining: _calcTotalSessionSeconds(pattern),
-        ),
-      ) {
+  factory BreathingBloc({required BreathingPattern pattern}) {
+    final program = migratePatternToProgram(pattern);
+    final timeline = program.resolve();
+    final firstPhase = timeline.cycles.first.phases.first;
+    return BreathingBloc._(
+      program: program,
+      timeline: timeline,
+      initialState: BreathingState(
+        selectedPattern: pattern,
+        currentPhase: firstPhase.type,
+        phaseSecondsRemaining: firstPhase.duration.inSeconds,
+        sessionSecondsRemaining: timeline.totalSeconds,
+      ),
+    );
+  }
+
+  BreathingBloc._({
+    required SessionProgram program,
+    required ResolvedTimeline timeline,
+    required BreathingState initialState,
+  }) : _program = program,
+       _timeline = timeline,
+       super(initialState) {
     on<PlayPressed>(_onPlayPressed);
     on<PausePressed>(_onPausePressed);
     on<ResetPressed>(_onResetPressed);
@@ -23,10 +40,17 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     on<BreathingTickUpdated>(_onTickUpdated);
   }
 
-  BreathingPattern _pattern;
+  SessionProgram _program;
+  ResolvedTimeline _timeline;
 
   Ticker? _ticker;
+
+  /// 0-based index of the current cycle in [_timeline].
+  int _absCycle = 0;
+
+  /// 0-based index of the current phase within [_timeline.cycles[_absCycle]].
   int _phaseIndex = 0;
+
   Duration _lastTickElapsed = Duration.zero;
   Duration _phaseAccumulated = Duration.zero;
 
@@ -44,56 +68,6 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     return super.close();
   }
 
-  /// Returns the effective phase for [phaseIndex] at [cycle].
-  /// Substitutes exhale → extendedExhale and inhale → extendedInhale on every
-  /// Nth cycle according to the pattern intervals.
-  BreathingPhase _effectivePhase(int phaseIndex, int cycle) {
-    final phase = _pattern.phases[phaseIndex];
-    final exhaleInterval = _pattern.extendedExhaleInterval;
-    if (phase.type == PhaseType.exhale &&
-        exhaleInterval != null &&
-        exhaleInterval > 0 &&
-        cycle > 0 &&
-        cycle % exhaleInterval == 0) {
-      return BreathingPhase(
-        type: PhaseType.extendedExhale,
-        duration: phase.duration + const Duration(seconds: 2),
-      );
-    }
-    final inhaleInterval = _pattern.extendedInhaleInterval;
-    if (phase.type == PhaseType.inhale &&
-        inhaleInterval != null &&
-        inhaleInterval > 0 &&
-        cycle > 0 &&
-        cycle % inhaleInterval == 0) {
-      return BreathingPhase(
-        type: PhaseType.extendedInhale,
-        duration: phase.duration + const Duration(seconds: 2),
-      );
-    }
-    return phase;
-  }
-
-  /// Called when [endingPhase] completes. Updates [_startFromDeep] and
-  /// [_startFromDeepTop]:
-  /// - extendedExhale ending  → next inhale must start from deep zone
-  /// - inhale ending          → deep-zone inhale is done, reset flag
-  /// - extendedInhale ending  → next exhale must recover from top zone
-  /// - exhale ending          → top-zone recovery exhale is done, reset flag
-  /// - all other phases       → flags unchanged
-  void _updateStartFromDeep(PhaseType endingPhase) {
-    if (endingPhase == PhaseType.extendedExhale) {
-      _startFromDeep = true;
-    } else if (endingPhase == PhaseType.inhale) {
-      _startFromDeep = false;
-    }
-    if (endingPhase == PhaseType.extendedInhale) {
-      _startFromDeepTop = true;
-    } else if (endingPhase == PhaseType.exhale) {
-      _startFromDeepTop = false;
-    }
-  }
-
   void _onPlayPressed(PlayPressed event, Emitter<BreathingState> emit) {
     if (state.status != SessionStatus.idle &&
         state.status != SessionStatus.paused) {
@@ -101,11 +75,10 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     }
 
     if (state.status == SessionStatus.idle) {
+      _absCycle = 0;
       _phaseIndex = 0;
       _phaseAccumulated = Duration.zero;
       _lastTickElapsed = Duration.zero;
-      // Fix: reset alongside all other session-start fields so previous
-      // _startFromDeep/_startFromDeepTop can never bleed into a fresh session.
       _startFromDeep = false;
       _startFromDeepTop = false;
       _ticker ??= Ticker(_onTick);
@@ -114,13 +87,11 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
       emit(
         state.copyWith(
           status: SessionStatus.playing,
-          // Fix: use the actual first phase type, not a hardcoded inhale.
-          currentPhase: _effectivePhase(_phaseIndex, state.currentCycle).type,
-          phaseSecondsRemaining: _secondsRemaining(state.currentCycle),
+          currentPhase: _timeline.cycles.first.phases.first.type,
+          phaseSecondsRemaining: _secondsRemaining(),
         ),
       );
     } else {
-      // Resuming from pause — retain phase, fillLevel, deepZoneFill as-is.
       _lastTickElapsed = Duration.zero;
       _ticker ??= Ticker(_onTick);
       if (!_ticker!.isActive) _ticker!.start();
@@ -137,47 +108,93 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
 
   void _onResetPressed(ResetPressed event, Emitter<BreathingState> emit) {
     _ticker?.stop();
+    _absCycle = 0;
     _phaseIndex = 0;
     _phaseAccumulated = Duration.zero;
     _lastTickElapsed = Duration.zero;
     _startFromDeep = false;
     _startFromDeepTop = false;
+    final firstPhase = _timeline.cycles.first.phases.first;
     emit(
       BreathingState(
-        selectedPattern: _pattern,
-        phaseSecondsRemaining: _pattern.phases.first.duration.inSeconds,
-        sessionSecondsRemaining: _totalSessionSeconds(),
+        selectedPattern: state.selectedPattern,
+        currentPhase: firstPhase.type,
+        phaseSecondsRemaining: firstPhase.duration.inSeconds,
+        sessionSecondsRemaining: _timeline.totalSeconds,
       ),
     );
   }
 
-  void _onPatternSelected(PatternSelected event, Emitter<BreathingState> emit) {
+  void _onPatternSelected(
+    PatternSelected event,
+    Emitter<BreathingState> emit,
+  ) {
     _ticker?.stop();
-    _pattern = event.pattern;
+    _program = migratePatternToProgram(event.pattern);
+    _timeline = _program.resolve();
+    _absCycle = 0;
     _phaseIndex = 0;
     _phaseAccumulated = Duration.zero;
     _lastTickElapsed = Duration.zero;
     _startFromDeep = false;
     _startFromDeepTop = false;
+    final firstPhase = _timeline.cycles.first.phases.first;
     emit(
       BreathingState(
-        selectedPattern: _pattern,
-        phaseSecondsRemaining: _pattern.phases.first.duration.inSeconds,
-        sessionSecondsRemaining: _totalSessionSeconds(),
+        selectedPattern: event.pattern,
+        currentPhase: firstPhase.type,
+        phaseSecondsRemaining: firstPhase.duration.inSeconds,
+        sessionSecondsRemaining: _timeline.totalSeconds,
       ),
     );
   }
 
-  // Öffentliches Event – für externe Auslösung und Scheibe-2-Tests.
+  // Public event — for external triggering and tests.
   void _onPhaseCompleted(PhaseCompleted event, Emitter<BreathingState> emit) {
     if (state.status != SessionStatus.playing) return;
 
     _updateStartFromDeep(state.currentPhase);
 
-    final nextIndex = (_phaseIndex + 1) % _pattern.phases.length;
-    final nextBaseType = _pattern.phases[nextIndex].type;
-    if (nextBaseType == PhaseType.inhale &&
-        state.currentCycle >= _pattern.defaultCycles) {
+    final currentCyclePhases = _timeline.cycles[_absCycle].phases;
+    final nextPhaseIndex = _phaseIndex + 1;
+
+    if (nextPhaseIndex < currentCyclePhases.length) {
+      _phaseIndex = nextPhaseIndex;
+      final next = currentCyclePhases[_phaseIndex];
+      emit(
+        state.copyWith(
+          currentPhase: next.type,
+          phaseSecondsRemaining: next.duration.inSeconds,
+          sessionSecondsRemaining: _sessionSecondsRemaining(),
+          fillLevel: _fillLevelForPhase(next.type, 0),
+          deepZoneFill: _deepZoneFillForPhase(next.type, 0),
+          topZoneFill: _topZoneFillForPhase(next.type, 0),
+          circleScale: _circleScaleForPhase(next.type, 0),
+          circleOpacity: _circleOpacityForPhase(next.type, 0),
+          circleBottomScale: _circleBottomScaleForPhase(next.type, 0),
+          circleBottomOpacity: _circleBottomOpacityForPhase(next.type, 0),
+        ),
+      );
+    } else if (_absCycle + 1 < _timeline.cycles.length) {
+      _absCycle++;
+      _phaseIndex = 0;
+      final next = _timeline.cycles[_absCycle].phases[0];
+      emit(
+        state.copyWith(
+          currentPhase: next.type,
+          currentCycle: _absCycle + 1,
+          phaseSecondsRemaining: next.duration.inSeconds,
+          sessionSecondsRemaining: _sessionSecondsRemaining(),
+          fillLevel: _fillLevelForPhase(next.type, 0),
+          deepZoneFill: _deepZoneFillForPhase(next.type, 0),
+          topZoneFill: _topZoneFillForPhase(next.type, 0),
+          circleScale: _circleScaleForPhase(next.type, 0),
+          circleOpacity: _circleOpacityForPhase(next.type, 0),
+          circleBottomScale: _circleBottomScaleForPhase(next.type, 0),
+          circleBottomOpacity: _circleBottomOpacityForPhase(next.type, 0),
+        ),
+      );
+    } else {
       _ticker?.stop();
       _startFromDeep = false;
       _startFromDeepTop = false;
@@ -190,32 +207,10 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
           sessionSecondsRemaining: 0,
         ),
       );
-      return;
     }
-    _phaseIndex = nextIndex;
-    final nextCycle = nextBaseType == PhaseType.inhale
-        ? state.currentCycle + 1
-        : state.currentCycle;
-    final effective = _effectivePhase(_phaseIndex, nextCycle);
-    final nextPhase = effective.type;
-    emit(
-      state.copyWith(
-        currentPhase: nextPhase,
-        currentCycle: nextCycle,
-        deepZoneFill: _deepZoneFillForPhase(nextPhase, 0),
-        topZoneFill: _topZoneFillForPhase(nextPhase, 0),
-        phaseSecondsRemaining: effective.duration.inSeconds,
-        sessionSecondsRemaining: _sessionSecondsRemaining(nextCycle),
-        fillLevel: _fillLevelForPhase(nextPhase, 0),
-        circleScale: _circleScaleForPhase(nextPhase, 0),
-        circleOpacity: _circleOpacityForPhase(nextPhase, 0),
-        circleBottomScale: _circleBottomScaleForPhase(nextPhase, 0),
-        circleBottomOpacity: _circleBottomOpacityForPhase(nextPhase, 0),
-      ),
-    );
   }
 
-  // Ticker-Event – verarbeitet delta und wechselt Phase direkt (kein add()).
+  // Ticker event — processes delta and transitions phases directly.
   void _onTickUpdated(
     BreathingTickUpdated event,
     Emitter<BreathingState> emit,
@@ -223,22 +218,53 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     if (state.status != SessionStatus.playing) return;
 
     _phaseAccumulated += event.delta;
-    final effectiveDuration = _effectivePhase(
-      _phaseIndex,
-      state.currentCycle,
-    ).duration;
+    final currentPhase = _timeline.cycles[_absCycle].phases[_phaseIndex];
 
-    if (_phaseAccumulated >= effectiveDuration) {
+    if (_phaseAccumulated >= currentPhase.duration) {
       _updateStartFromDeep(state.currentPhase);
+      // Carry overshoot so sub-phase timing drift doesn't compound.
+      _phaseAccumulated -= currentPhase.duration;
 
-      // Fix: carry the overshoot forward instead of resetting to zero,
-      // so sub-phase timing drift doesn't compound over a session.
-      _phaseAccumulated -= effectiveDuration;
+      final currentCyclePhases = _timeline.cycles[_absCycle].phases;
+      final nextPhaseIndex = _phaseIndex + 1;
 
-      final nextIndex = (_phaseIndex + 1) % _pattern.phases.length;
-      final nextBaseType = _pattern.phases[nextIndex].type;
-      if (nextBaseType == PhaseType.inhale &&
-          state.currentCycle >= _pattern.defaultCycles) {
+      if (nextPhaseIndex < currentCyclePhases.length) {
+        _phaseIndex = nextPhaseIndex;
+        final next = currentCyclePhases[_phaseIndex];
+        emit(
+          state.copyWith(
+            currentPhase: next.type,
+            phaseSecondsRemaining: _secondsRemaining(),
+            sessionSecondsRemaining: _sessionSecondsRemaining(),
+            fillLevel: _fillLevelForPhase(next.type, 0),
+            deepZoneFill: _deepZoneFillForPhase(next.type, 0),
+            topZoneFill: _topZoneFillForPhase(next.type, 0),
+            circleScale: _circleScaleForPhase(next.type, 0),
+            circleOpacity: _circleOpacityForPhase(next.type, 0),
+            circleBottomScale: _circleBottomScaleForPhase(next.type, 0),
+            circleBottomOpacity: _circleBottomOpacityForPhase(next.type, 0),
+          ),
+        );
+      } else if (_absCycle + 1 < _timeline.cycles.length) {
+        _absCycle++;
+        _phaseIndex = 0;
+        final next = _timeline.cycles[_absCycle].phases[0];
+        emit(
+          state.copyWith(
+            currentPhase: next.type,
+            currentCycle: _absCycle + 1,
+            phaseSecondsRemaining: _secondsRemaining(),
+            sessionSecondsRemaining: _sessionSecondsRemaining(),
+            fillLevel: _fillLevelForPhase(next.type, 0),
+            deepZoneFill: _deepZoneFillForPhase(next.type, 0),
+            topZoneFill: _topZoneFillForPhase(next.type, 0),
+            circleScale: _circleScaleForPhase(next.type, 0),
+            circleOpacity: _circleOpacityForPhase(next.type, 0),
+            circleBottomScale: _circleBottomScaleForPhase(next.type, 0),
+            circleBottomOpacity: _circleBottomOpacityForPhase(next.type, 0),
+          ),
+        );
+      } else {
         _ticker?.stop();
         _startFromDeep = false;
         _startFromDeepTop = false;
@@ -251,49 +277,24 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
             sessionSecondsRemaining: 0,
           ),
         );
-        return;
       }
-      _phaseIndex = nextIndex;
-      final nextCycle = nextBaseType == PhaseType.inhale
-          ? state.currentCycle + 1
-          : state.currentCycle;
-      final effective = _effectivePhase(_phaseIndex, nextCycle);
-      final nextPhase = effective.type;
-      emit(
-        state.copyWith(
-          currentPhase: nextPhase,
-          currentCycle: nextCycle,
-          deepZoneFill: _deepZoneFillForPhase(nextPhase, 0),
-          topZoneFill: _topZoneFillForPhase(nextPhase, 0),
-          phaseSecondsRemaining: _secondsRemaining(nextCycle),
-          sessionSecondsRemaining: _sessionSecondsRemaining(nextCycle),
-          fillLevel: _fillLevelForPhase(nextPhase, 0),
-          circleScale: _circleScaleForPhase(nextPhase, 0),
-          circleOpacity: _circleOpacityForPhase(nextPhase, 0),
-          circleBottomScale: _circleBottomScaleForPhase(nextPhase, 0),
-          circleBottomOpacity: _circleBottomOpacityForPhase(nextPhase, 0),
-        ),
-      );
     } else {
       final progress =
-          _phaseAccumulated.inMicroseconds / effectiveDuration.inMicroseconds;
+          _phaseAccumulated.inMicroseconds /
+          currentPhase.duration.inMicroseconds;
       emit(
         state.copyWith(
-          phaseSecondsRemaining: _secondsRemaining(state.currentCycle),
-          sessionSecondsRemaining: _sessionSecondsRemaining(state.currentCycle),
+          phaseSecondsRemaining: _secondsRemaining(),
+          sessionSecondsRemaining: _sessionSecondsRemaining(),
           fillLevel: _fillLevelForPhase(state.currentPhase, progress),
           deepZoneFill: _deepZoneFillForPhase(state.currentPhase, progress),
           topZoneFill: _topZoneFillForPhase(state.currentPhase, progress),
           circleScale: _circleScaleForPhase(state.currentPhase, progress),
           circleOpacity: _circleOpacityForPhase(state.currentPhase, progress),
-          circleBottomScale: _circleBottomScaleForPhase(
-            state.currentPhase,
-            progress,
-          ),
-          circleBottomOpacity: _circleBottomOpacityForPhase(
-            state.currentPhase,
-            progress,
-          ),
+          circleBottomScale:
+              _circleBottomScaleForPhase(state.currentPhase, progress),
+          circleBottomOpacity:
+              _circleBottomOpacityForPhase(state.currentPhase, progress),
         ),
       );
     }
@@ -306,8 +307,22 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     add(BreathingTickUpdated(delta));
   }
 
-  int _secondsRemaining(int cycle) {
-    final duration = _effectivePhase(_phaseIndex, cycle).duration;
+  /// Called when [endingPhase] completes. Updates deep-zone tracking flags.
+  void _updateStartFromDeep(PhaseType endingPhase) {
+    if (endingPhase == PhaseType.extendedExhale) {
+      _startFromDeep = true;
+    } else if (endingPhase == PhaseType.inhale) {
+      _startFromDeep = false;
+    }
+    if (endingPhase == PhaseType.extendedInhale) {
+      _startFromDeepTop = true;
+    } else if (endingPhase == PhaseType.exhale) {
+      _startFromDeepTop = false;
+    }
+  }
+
+  int _secondsRemaining() {
+    final duration = _timeline.cycles[_absCycle].phases[_phaseIndex].duration;
     final remaining = duration - _phaseAccumulated;
     return (remaining.inMilliseconds / 1000).ceil().clamp(
       0,
@@ -315,45 +330,15 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     );
   }
 
-  /// Seconds remaining in the full session from the current position.
-  /// Accounts for extended-exhale +2 s on each qualifying cycle.
-  int _sessionSecondsRemaining(int currentCycle) {
-    var total = _secondsRemaining(currentCycle);
-    // Remaining phases in current cycle using effective durations.
-    for (var i = _phaseIndex + 1; i < _pattern.phases.length; i++) {
-      total += _effectivePhase(i, currentCycle).duration.inSeconds;
+  int _sessionSecondsRemaining() {
+    var total = _secondsRemaining();
+    final currentCyclePhases = _timeline.cycles[_absCycle].phases;
+    for (var i = _phaseIndex + 1; i < currentCyclePhases.length; i++) {
+      total += currentCyclePhases[i].duration.inSeconds;
     }
-    // All future complete cycles using effective durations.
-    for (var c = currentCycle + 1; c <= _pattern.defaultCycles; c++) {
-      for (var i = 0; i < _pattern.phases.length; i++) {
-        total += _effectivePhase(i, c).duration.inSeconds;
-      }
-    }
-    return total;
-  }
-
-  int _totalSessionSeconds() => _calcTotalSessionSeconds(_pattern);
-
-  /// Computes the full session duration including extended-exhale/-inhale
-  /// cycles.
-  static int _calcTotalSessionSeconds(BreathingPattern pattern) {
-    final exhaleInterval = pattern.extendedExhaleInterval;
-    final inhaleInterval = pattern.extendedInhaleInterval;
-    var total = 0;
-    for (var c = 1; c <= pattern.defaultCycles; c++) {
-      for (final phase in pattern.phases) {
-        final isExtExhale =
-            phase.type == PhaseType.exhale &&
-            exhaleInterval != null &&
-            exhaleInterval > 0 &&
-            c % exhaleInterval == 0;
-        final isExtInhale =
-            phase.type == PhaseType.inhale &&
-            inhaleInterval != null &&
-            inhaleInterval > 0 &&
-            c % inhaleInterval == 0;
-        total +=
-            phase.duration.inSeconds + ((isExtExhale || isExtInhale) ? 2 : 0);
+    for (var c = _absCycle + 1; c < _timeline.cycles.length; c++) {
+      for (final phase in _timeline.cycles[c].phases) {
+        total += phase.duration.inSeconds;
       }
     }
     return total;
@@ -361,7 +346,6 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
 
   // Spatial threshold: fraction of progress at which the middle zone is fully
   // empty during extendedExhale (middle flex=6, lower flex=2 → 6/8 = 0.75).
-  // The same ratio governs the reverse animation (inhale from deep zone).
   static const double _kExtendedExhaleThreshold = 6.0 / (6.0 + 2.0); // 0.75
   static const double _kDeepInhaleThreshold =
       1.0 - _kExtendedExhaleThreshold; // 0.25
@@ -404,14 +388,11 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
 
   double _deepZoneFillForPhase(PhaseType phase, double progress) {
     return switch (phase) {
-      // Exhale extension: lower zone fills from top (0→1).
       PhaseType.extendedExhale when progress > _kExtendedExhaleThreshold =>
         ((progress - _kExtendedExhaleThreshold) /
                 (1.0 - _kExtendedExhaleThreshold))
             .clamp(0.0, 1.0),
-      // Hold after deep exhale: lower zone stays fully filled.
       PhaseType.holdOut when _startFromDeep => 1.0,
-      // Deep inhale: lower zone drains upward (1→0) then middle fills.
       PhaseType.inhale when _startFromDeep =>
         (1.0 - progress / _kDeepInhaleThreshold).clamp(0.0, 1.0),
       _ => 0.0,
@@ -420,14 +401,11 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
 
   double _topZoneFillForPhase(PhaseType phase, double progress) {
     return switch (phase) {
-      // Inhale extension: upper zone fills from bottom (0→1).
       PhaseType.extendedInhale when progress > _kExtendedExhaleThreshold =>
         ((progress - _kExtendedExhaleThreshold) /
                 (1.0 - _kExtendedExhaleThreshold))
             .clamp(0.0, 1.0),
-      // Hold after deep inhale: upper zone stays fully filled.
       PhaseType.holdIn when _startFromDeepTop => 1.0,
-      // Recovery exhale: upper zone drains downward (1→0) then middle empties.
       PhaseType.exhale when _startFromDeepTop =>
         (1.0 - progress / _kDeepInhaleThreshold).clamp(0.0, 1.0),
       _ => 0.0,
@@ -443,22 +421,18 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
 
   double _circleOpacityForPhase(PhaseType phase, double progress) {
     return switch (phase) {
-      // Recovery exhale: top circle reappears quickly as top zone clears.
       PhaseType.exhale when _startFromDeepTop =>
         (progress / _kDeepInhaleThreshold).clamp(0.0, 1.0),
       PhaseType.exhale => progress,
-      // Fade in over the middle-zone portion at the same apparent speed.
       PhaseType.extendedExhale => (progress / _kExtendedExhaleThreshold).clamp(
         0.0,
         1.0,
       ),
-      // Top circle fades out as the upper zone fills during deep inhale.
       PhaseType.extendedInhale =>
         1.0 -
             ((progress - _kExtendedExhaleThreshold) /
                     (1.0 - _kExtendedExhaleThreshold))
                 .clamp(0.0, 1.0),
-      // Top zone still filled during hold: keep circle hidden.
       PhaseType.holdIn when _startFromDeepTop => 0.0,
       _ => 1.0,
     };
@@ -474,13 +448,10 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
   double _circleBottomOpacityForPhase(PhaseType phase, double progress) {
     return switch (phase) {
       PhaseType.inhale => progress,
-      // Bottom circle appears as middle fills during deep inhale.
       PhaseType.extendedInhale => (progress / _kExtendedExhaleThreshold).clamp(
         0.0,
         1.0,
       ),
-      // Fade bottom circle out as deep zone fills (0.75→1).
-      // Before 0.75 residual air in lower zone keeps circle visible.
       PhaseType.extendedExhale =>
         1.0 -
             ((progress - _kExtendedExhaleThreshold) /
