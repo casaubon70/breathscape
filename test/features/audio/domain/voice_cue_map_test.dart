@@ -22,6 +22,13 @@ void main() {
       );
     });
 
+    test('extendedInhale maps to breath_in.mp3 (fallback)', () {
+      expect(
+        VoiceCueMap.assetPath(PhaseType.extendedInhale),
+        'assets/voices/breath_in.mp3',
+      );
+    });
+
     test('extendedExhale maps to breath_out_deeply.mp3', () {
       expect(
         VoiceCueMap.assetPath(PhaseType.extendedExhale),

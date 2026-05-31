@@ -159,7 +159,7 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
                     // Subtract the dot-row area derived from the widget's own
                     // constant + the theme spacing so no magic number
                     // creeps in.
-                    final dotsAreaHeight = CycleDotRow.dotLarge + spacing.m;
+                    final dotsAreaHeight = CycleDotRow.rowHeight + spacing.m;
                     final animHeight =
                         ((constraints.maxHeight - dotsAreaHeight) * 0.40).clamp(
                           130.0,
@@ -193,6 +193,9 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
                                 extendedExhaleInterval: dotState
                                     .selectedPattern
                                     .extendedExhaleInterval,
+                                extendedInhaleInterval: dotState
+                                    .selectedPattern
+                                    .extendedInhaleInterval,
                               ),
                             ),
                           ),
@@ -239,14 +242,14 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
                             ? TextButton(
                                 onPressed: () =>
                                     context.read<PatternsBloc>().add(
-                                  PatternReset(
-                                    context
-                                        .read<BreathingBloc>()
-                                        .state
-                                        .selectedPattern
-                                        .name,
-                                  ),
-                                ),
+                                      PatternReset(
+                                        context
+                                            .read<BreathingBloc>()
+                                            .state
+                                            .selectedPattern
+                                            .name,
+                                      ),
+                                    ),
                                 child: Text(
                                   'RESET',
                                   style: TextStyle(
@@ -300,6 +303,7 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
       prev.circleBottomOpacity != curr.circleBottomOpacity ||
       prev.currentPhase != curr.currentPhase ||
       prev.deepZoneFill != curr.deepZoneFill ||
+      prev.topZoneFill != curr.topZoneFill ||
       prev.status != curr.status ||
       prev.selectedPattern != curr.selectedPattern;
 
@@ -322,6 +326,8 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
         circleBottomOpacity: state.circleBottomOpacity,
         isExtendedExhale: state.isExtendedExhale,
         deepZoneFill: state.deepZoneFill,
+        isExtendedInhale: state.isExtendedInhale,
+        topZoneFill: state.topZoneFill,
         showTopCircle: state.selectedPattern.phases.any(
           (p) => p.type == PhaseType.holdIn,
         ),
@@ -373,10 +379,16 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
           width: constraints.maxWidth,
           child: _editMode
               ? _buildEditStack(
-                  context, animHeight, constraints.maxWidth, spacing,
+                  context,
+                  animHeight,
+                  constraints.maxWidth,
+                  spacing,
                 )
               : _buildNormalStack(
-                  context, animHeight, constraints.maxWidth, animWidth,
+                  context,
+                  animHeight,
+                  constraints.maxWidth,
+                  animWidth,
                 ),
         ),
       ],
@@ -424,8 +436,10 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
     final circleSize = animHeight * BreathingAnimationWidget.kCircleRatio;
     const barGap = BreathingAnimationWidget.kBarGap;
     final totalHeight = circleSize * 2 + barGap * 2 + animHeight;
-    final adjustersLeft = ((maxWidth + circleSize) / 2 + spacing.m)
-        .clamp(0.0, maxWidth - spacing.m);
+    final adjustersLeft = ((maxWidth + circleSize) / 2 + spacing.m).clamp(
+      0.0,
+      maxWidth - spacing.m,
+    );
 
     return SizedBox(
       height: totalHeight,
@@ -446,7 +460,11 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
               buildWhen: (prev, curr) =>
                   prev.selectedPattern != curr.selectedPattern,
               builder: (context, state) => _buildAdjusterStack(
-                context, state, animHeight, adjustersLeft, spacing,
+                context,
+                state,
+                animHeight,
+                adjustersLeft,
+                spacing,
               ),
             ),
           ),
@@ -472,9 +490,9 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
       PhaseType.holdIn => circleSize * 0.5,
       PhaseType.inhale => barTop + animHeight * 0.3,
       PhaseType.exhale => barTop + animHeight * 0.7,
-      PhaseType.holdOut =>
-        barTop + animHeight + barGap + circleSize * 0.5,
+      PhaseType.holdOut => barTop + animHeight + barGap + circleSize * 0.5,
       PhaseType.extendedExhale => barTop + animHeight * 0.7,
+      PhaseType.extendedInhale => barTop + animHeight * 0.3,
     };
 
     return Stack(
@@ -491,10 +509,10 @@ class _BreathingSessionViewState extends State<_BreathingSessionView> {
               seconds: state.selectedPattern.phases[i].duration.inSeconds,
               canDecrease:
                   state.selectedPattern.phases[i].duration.inSeconds >
-                      PatternsBloc.minSeconds,
+                  PatternsBloc.minSeconds,
               canIncrease:
                   state.selectedPattern.phases[i].duration.inSeconds <
-                      PatternsBloc.maxSeconds,
+                  PatternsBloc.maxSeconds,
               onDecrease: () => context.read<PatternsBloc>().add(
                 PhaseSecondsEdited(
                   patternName: state.selectedPattern.name,

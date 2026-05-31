@@ -18,17 +18,21 @@ void main() {
       expect(values.toSet().length, values.length);
     });
 
-    test('PhaseType contains all required values including extendedExhale', () {
-      expect(
-        PhaseType.values,
-        containsAll([
-          PhaseType.inhale,
-          PhaseType.holdIn,
-          PhaseType.exhale,
-          PhaseType.extendedExhale,
-          PhaseType.holdOut,
-        ]),
-      );
-    });
+    test(
+      'PhaseType contains all required values including extended phases',
+      () {
+        expect(
+          PhaseType.values,
+          containsAll([
+            PhaseType.inhale,
+            PhaseType.extendedInhale,
+            PhaseType.holdIn,
+            PhaseType.exhale,
+            PhaseType.extendedExhale,
+            PhaseType.holdOut,
+          ]),
+        );
+      },
+    );
   });
 }

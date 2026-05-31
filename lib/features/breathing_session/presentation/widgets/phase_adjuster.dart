@@ -47,10 +47,7 @@ class PhaseAdjusterRow extends StatelessWidget {
       onIncrease: onIncrease,
     );
     if (stacked) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [label, stepper],
-      );
+      return Column(mainAxisSize: MainAxisSize.min, children: [label, stepper]);
     }
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -60,6 +57,7 @@ class PhaseAdjusterRow extends StatelessWidget {
 
   static String labelForType(PhaseType type) => switch (type) {
     PhaseType.inhale => 'INHALE',
+    PhaseType.extendedInhale => 'DEEP INHALE',
     PhaseType.holdIn => 'HOLD',
     PhaseType.exhale => 'EXHALE',
     PhaseType.extendedExhale => 'DEEP EXHALE',

@@ -1,6 +1,13 @@
 import 'package:equatable/equatable.dart';
 
-enum PhaseType { inhale, holdIn, exhale, extendedExhale, holdOut }
+enum PhaseType {
+  inhale,
+  extendedInhale,
+  holdIn,
+  exhale,
+  extendedExhale,
+  holdOut,
+}
 
 /// Valid editable range for a single phase duration, shared between domain
 /// validation (PatternsBloc) and UI controls (PhaseAdjuster).
@@ -25,6 +32,7 @@ class BreathingPhase extends Equatable {
       'inhale' => PhaseType.inhale,
       'hold_in' => PhaseType.holdIn,
       'exhale' => PhaseType.exhale,
+      'extended_inhale' => PhaseType.extendedInhale,
       'extended_exhale' => PhaseType.extendedExhale,
       'hold_out' => PhaseType.holdOut,
       _ => throw ArgumentError('Unknown phase type: $value'),

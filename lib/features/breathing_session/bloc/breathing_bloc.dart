@@ -35,6 +35,10 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
   /// Set when extendedExhale ends; cleared when inhale ends.
   bool _startFromDeep = false;
 
+  /// True while the current or upcoming exhale must recover from the top zone.
+  /// Set when extendedInhale ends; cleared when exhale ends.
+  bool _startFromDeepTop = false;
+
   @override
   Future<void> close() {
     _ticker?.dispose();
@@ -42,32 +46,52 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
   }
 
   /// Returns the effective phase for [phaseIndex] at [cycle].
-  /// Substitutes exhale → extendedExhale on every Nth cycle.
+  /// Substitutes exhale → extendedExhale and inhale → extendedInhale on every
+  /// Nth cycle according to the pattern intervals.
   BreathingPhase _effectivePhase(int phaseIndex, int cycle) {
     final phase = _pattern.phases[phaseIndex];
-    final interval = _pattern.extendedExhaleInterval;
+    final exhaleInterval = _pattern.extendedExhaleInterval;
     if (phase.type == PhaseType.exhale &&
-        interval != null &&
-        interval > 0 &&
+        exhaleInterval != null &&
+        exhaleInterval > 0 &&
         cycle > 0 &&
-        cycle % interval == 0) {
+        cycle % exhaleInterval == 0) {
       return BreathingPhase(
         type: PhaseType.extendedExhale,
+        duration: phase.duration + const Duration(seconds: 2),
+      );
+    }
+    final inhaleInterval = _pattern.extendedInhaleInterval;
+    if (phase.type == PhaseType.inhale &&
+        inhaleInterval != null &&
+        inhaleInterval > 0 &&
+        cycle > 0 &&
+        cycle % inhaleInterval == 0) {
+      return BreathingPhase(
+        type: PhaseType.extendedInhale,
         duration: phase.duration + const Duration(seconds: 2),
       );
     }
     return phase;
   }
 
-  /// Called when [endingPhase] completes. Updates [_startFromDeep]:
+  /// Called when [endingPhase] completes. Updates [_startFromDeep] and
+  /// [_startFromDeepTop]:
   /// - extendedExhale ending  → next inhale must start from deep zone
   /// - inhale ending          → deep-zone inhale is done, reset flag
-  /// - all other phases       → flag unchanged (preserved through holdOut etc.)
+  /// - extendedInhale ending  → next exhale must recover from top zone
+  /// - exhale ending          → top-zone recovery exhale is done, reset flag
+  /// - all other phases       → flags unchanged
   void _updateStartFromDeep(PhaseType endingPhase) {
     if (endingPhase == PhaseType.extendedExhale) {
       _startFromDeep = true;
     } else if (endingPhase == PhaseType.inhale) {
       _startFromDeep = false;
+    }
+    if (endingPhase == PhaseType.extendedInhale) {
+      _startFromDeepTop = true;
+    } else if (endingPhase == PhaseType.exhale) {
+      _startFromDeepTop = false;
     }
   }
 
@@ -81,9 +105,10 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
       _phaseIndex = 0;
       _phaseAccumulated = Duration.zero;
       _lastTickElapsed = Duration.zero;
-      // Fix: reset alongside all other session-start fields so a previous
-      // _startFromDeep=true can never bleed into a fresh session.
+      // Fix: reset alongside all other session-start fields so previous
+      // _startFromDeep/_startFromDeepTop can never bleed into a fresh session.
       _startFromDeep = false;
+      _startFromDeepTop = false;
       _ticker ??= Ticker(_onTick);
       if (!_ticker!.isActive) _ticker!.start();
 
@@ -117,6 +142,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     _phaseAccumulated = Duration.zero;
     _lastTickElapsed = Duration.zero;
     _startFromDeep = false;
+    _startFromDeepTop = false;
     emit(
       BreathingState(
         selectedPattern: _pattern,
@@ -133,6 +159,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     _phaseAccumulated = Duration.zero;
     _lastTickElapsed = Duration.zero;
     _startFromDeep = false;
+    _startFromDeepTop = false;
     emit(
       BreathingState(
         selectedPattern: _pattern,
@@ -150,8 +177,10 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     // Clamp accumulator so that reducing a phase duration below elapsed time
     // causes the phase to complete on the next tick rather than carrying
     // overshoot that could cascade-skip subsequent phases.
-    final newDuration =
-        _effectivePhase(_phaseIndex, state.currentCycle).duration;
+    final newDuration = _effectivePhase(
+      _phaseIndex,
+      state.currentCycle,
+    ).duration;
     if (_phaseAccumulated >= newDuration) {
       _phaseAccumulated = newDuration - const Duration(microseconds: 1);
     }
@@ -176,11 +205,13 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
         state.currentCycle >= _pattern.defaultCycles) {
       _ticker?.stop();
       _startFromDeep = false;
+      _startFromDeepTop = false;
       emit(
         state.copyWith(
           status: SessionStatus.completed,
           fillLevel: 0,
           deepZoneFill: 0,
+          topZoneFill: 0,
           sessionSecondsRemaining: 0,
         ),
       );
@@ -197,6 +228,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
         currentPhase: nextPhase,
         currentCycle: nextCycle,
         deepZoneFill: _deepZoneFillForPhase(nextPhase, 0),
+        topZoneFill: _topZoneFillForPhase(nextPhase, 0),
         phaseSecondsRemaining: effective.duration.inSeconds,
         sessionSecondsRemaining: _sessionSecondsRemaining(nextCycle),
         fillLevel: _fillLevelForPhase(nextPhase, 0),
@@ -234,11 +266,13 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
           state.currentCycle >= _pattern.defaultCycles) {
         _ticker?.stop();
         _startFromDeep = false;
+        _startFromDeepTop = false;
         emit(
           state.copyWith(
             status: SessionStatus.completed,
             fillLevel: 0,
             deepZoneFill: 0,
+            topZoneFill: 0,
             sessionSecondsRemaining: 0,
           ),
         );
@@ -255,6 +289,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
           currentPhase: nextPhase,
           currentCycle: nextCycle,
           deepZoneFill: _deepZoneFillForPhase(nextPhase, 0),
+          topZoneFill: _topZoneFillForPhase(nextPhase, 0),
           phaseSecondsRemaining: _secondsRemaining(nextCycle),
           sessionSecondsRemaining: _sessionSecondsRemaining(nextCycle),
           fillLevel: _fillLevelForPhase(nextPhase, 0),
@@ -273,6 +308,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
           sessionSecondsRemaining: _sessionSecondsRemaining(state.currentCycle),
           fillLevel: _fillLevelForPhase(state.currentPhase, progress),
           deepZoneFill: _deepZoneFillForPhase(state.currentPhase, progress),
+          topZoneFill: _topZoneFillForPhase(state.currentPhase, progress),
           circleScale: _circleScaleForPhase(state.currentPhase, progress),
           circleOpacity: _circleOpacityForPhase(state.currentPhase, progress),
           circleBottomScale: _circleBottomScaleForPhase(
@@ -323,20 +359,26 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
 
   int _totalSessionSeconds() => _calcTotalSessionSeconds(_pattern);
 
-  /// Computes the full session duration including extended-exhale cycles.
+  /// Computes the full session duration including extended-exhale/-inhale
+  /// cycles.
   static int _calcTotalSessionSeconds(BreathingPattern pattern) {
-    final interval = pattern.extendedExhaleInterval;
+    final exhaleInterval = pattern.extendedExhaleInterval;
+    final inhaleInterval = pattern.extendedInhaleInterval;
     var total = 0;
     for (var c = 1; c <= pattern.defaultCycles; c++) {
       for (final phase in pattern.phases) {
-        if (phase.type == PhaseType.exhale &&
-            interval != null &&
-            interval > 0 &&
-            c % interval == 0) {
-          total += phase.duration.inSeconds + 2;
-        } else {
-          total += phase.duration.inSeconds;
-        }
+        final isExtExhale =
+            phase.type == PhaseType.exhale &&
+            exhaleInterval != null &&
+            exhaleInterval > 0 &&
+            c % exhaleInterval == 0;
+        final isExtInhale =
+            phase.type == PhaseType.inhale &&
+            inhaleInterval != null &&
+            inhaleInterval > 0 &&
+            c % inhaleInterval == 0;
+        total +=
+            phase.duration.inSeconds + ((isExtExhale || isExtInhale) ? 2 : 0);
       }
     }
     return total;
@@ -353,8 +395,13 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     return switch (phase) {
       PhaseType.inhale =>
         _startFromDeep ? _deepInhaleFillLevel(progress) : progress,
+      PhaseType.extendedInhale => (progress / _kExtendedExhaleThreshold).clamp(
+        0.0,
+        1.0,
+      ),
       PhaseType.holdIn => 1.0,
-      PhaseType.exhale => 1.0 - progress,
+      PhaseType.exhale =>
+        _startFromDeepTop ? _deepTopExhaleFillLevel(progress) : 1.0 - progress,
       PhaseType.extendedExhale =>
         (1.0 - progress / _kExtendedExhaleThreshold).clamp(0.0, 1.0),
       PhaseType.holdOut => 0.0,
@@ -365,8 +412,18 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
   /// Progress 0→0.25: lower zone clears (fillLevel stays 0).
   /// Progress 0.25→1.0: middle zone fills at uniform speed.
   double _deepInhaleFillLevel(double progress) {
-    if (progress <= _kDeepInhaleThreshold) return 0.0;
+    if (progress <= _kDeepInhaleThreshold) return 0;
     return ((progress - _kDeepInhaleThreshold) / _kExtendedExhaleThreshold)
+        .clamp(0.0, 1.0);
+  }
+
+  /// fillLevel for exhale that recovers from a full top zone.
+  /// Progress 0→0.25: top zone clears (fillLevel stays 1.0).
+  /// Progress 0.25→1.0: middle zone empties at uniform speed.
+  double _deepTopExhaleFillLevel(double progress) {
+    if (progress <= _kDeepInhaleThreshold) return 1;
+    return (1.0 -
+            (progress - _kDeepInhaleThreshold) / _kExtendedExhaleThreshold)
         .clamp(0.0, 1.0);
   }
 
@@ -386,6 +443,22 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     };
   }
 
+  double _topZoneFillForPhase(PhaseType phase, double progress) {
+    return switch (phase) {
+      // Inhale extension: upper zone fills from bottom (0→1).
+      PhaseType.extendedInhale when progress > _kExtendedExhaleThreshold =>
+        ((progress - _kExtendedExhaleThreshold) /
+                (1.0 - _kExtendedExhaleThreshold))
+            .clamp(0.0, 1.0),
+      // Hold after deep inhale: upper zone stays fully filled.
+      PhaseType.holdIn when _startFromDeepTop => 1.0,
+      // Recovery exhale: upper zone drains downward (1→0) then middle empties.
+      PhaseType.exhale when _startFromDeepTop =>
+        (1.0 - progress / _kDeepInhaleThreshold).clamp(0.0, 1.0),
+      _ => 0.0,
+    };
+  }
+
   double _circleScaleForPhase(PhaseType phase, double progress) {
     return switch (phase) {
       PhaseType.holdIn => 1.0 - progress,
@@ -395,12 +468,23 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
 
   double _circleOpacityForPhase(PhaseType phase, double progress) {
     return switch (phase) {
+      // Recovery exhale: top circle reappears quickly as top zone clears.
+      PhaseType.exhale when _startFromDeepTop =>
+        (progress / _kDeepInhaleThreshold).clamp(0.0, 1.0),
       PhaseType.exhale => progress,
       // Fade in over the middle-zone portion at the same apparent speed.
       PhaseType.extendedExhale => (progress / _kExtendedExhaleThreshold).clamp(
         0.0,
         1.0,
       ),
+      // Top circle fades out as the upper zone fills during deep inhale.
+      PhaseType.extendedInhale =>
+        1.0 -
+            ((progress - _kExtendedExhaleThreshold) /
+                    (1.0 - _kExtendedExhaleThreshold))
+                .clamp(0.0, 1.0),
+      // Top zone still filled during hold: keep circle hidden.
+      PhaseType.holdIn when _startFromDeepTop => 0.0,
       _ => 1.0,
     };
   }
@@ -415,8 +499,13 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
   double _circleBottomOpacityForPhase(PhaseType phase, double progress) {
     return switch (phase) {
       PhaseType.inhale => progress,
-      // Fix: fade the bottom circle out as the deep zone fills (progress 0.75→1).
-      // Before the threshold the lower zone still has residual air → circle visible.
+      // Bottom circle appears as middle fills during deep inhale.
+      PhaseType.extendedInhale => (progress / _kExtendedExhaleThreshold).clamp(
+        0.0,
+        1.0,
+      ),
+      // Fade bottom circle out as deep zone fills (0.75→1).
+      // Before 0.75 residual air in lower zone keeps circle visible.
       PhaseType.extendedExhale =>
         1.0 -
             ((progress - _kExtendedExhaleThreshold) /

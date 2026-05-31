@@ -74,5 +74,19 @@ void main() {
       );
       expect(pattern.extendedExhaleInterval, 3);
     });
+
+    test('extendedInhaleInterval defaults to null', () {
+      const pattern = BreathingPattern(name: 'Simple', phases: []);
+      expect(pattern.extendedInhaleInterval, isNull);
+    });
+
+    test('extendedInhaleInterval can be set to an integer', () {
+      const pattern = BreathingPattern(
+        name: 'Deep Inhale',
+        phases: [],
+        extendedInhaleInterval: 3,
+      );
+      expect(pattern.extendedInhaleInterval, 3);
+    });
   });
 }

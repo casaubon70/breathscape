@@ -18,6 +18,7 @@ final class BreathingState extends Equatable {
     this.circleBottomScale = 1.0,
     this.circleBottomOpacity = 0.0,
     this.deepZoneFill = 0.0,
+    this.topZoneFill = 0.0,
   });
 
   final BreathingPattern selectedPattern;
@@ -35,9 +36,16 @@ final class BreathingState extends Equatable {
   /// Derived: true whenever [currentPhase] is [PhaseType.extendedExhale].
   bool get isExtendedExhale => currentPhase == PhaseType.extendedExhale;
 
+  /// Derived: true whenever [currentPhase] is [PhaseType.extendedInhale].
+  bool get isExtendedInhale => currentPhase == PhaseType.extendedInhale;
+
   /// How much of the lower surfaceDim zone has been filled (0.0–1.0).
   /// Only > 0 during the extension phase of an extended exhale.
   final double deepZoneFill;
+
+  /// How much of the upper surfaceDim zone has been filled (0.0–1.0).
+  /// Only > 0 during the extension phase of an extended inhale.
+  final double topZoneFill;
 
   BreathingState copyWith({
     BreathingPattern? selectedPattern,
@@ -52,6 +60,7 @@ final class BreathingState extends Equatable {
     double? circleBottomScale,
     double? circleBottomOpacity,
     double? deepZoneFill,
+    double? topZoneFill,
   }) {
     return BreathingState(
       selectedPattern: selectedPattern ?? this.selectedPattern,
@@ -68,6 +77,7 @@ final class BreathingState extends Equatable {
       circleBottomScale: circleBottomScale ?? this.circleBottomScale,
       circleBottomOpacity: circleBottomOpacity ?? this.circleBottomOpacity,
       deepZoneFill: deepZoneFill ?? this.deepZoneFill,
+      topZoneFill: topZoneFill ?? this.topZoneFill,
     );
   }
 
@@ -85,5 +95,6 @@ final class BreathingState extends Equatable {
     circleBottomScale,
     circleBottomOpacity,
     deepZoneFill,
+    topZoneFill,
   ];
 }

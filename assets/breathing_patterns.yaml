@@ -39,3 +39,25 @@ patterns:
         seconds: 5
       - type: exhale
         seconds: 5
+
+  - name: Box Breathing (Deep Inhale)
+    default_cycles: 10
+    extended_inhale_interval: 3
+    phases:
+      - type: inhale
+        seconds: 4
+      - type: hold_in
+        seconds: 4
+      - type: exhale
+        seconds: 4
+      - type: hold_out
+        seconds: 4
+
+  - name: Test Deep-Inhale
+    default_cycles: 10
+    extended_inhale_interval: 1
+    phases:
+      - type: inhale
+        seconds: 2
+      - type: exhale
+        seconds: 2

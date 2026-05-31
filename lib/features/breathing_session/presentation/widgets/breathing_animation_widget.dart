@@ -15,6 +15,8 @@ class BreathingAnimationWidget extends StatelessWidget {
     this.showBottomCircle = true,
     this.isExtendedExhale = false,
     this.deepZoneFill = 0.0,
+    this.isExtendedInhale = false,
+    this.topZoneFill = 0.0,
     super.key,
   });
 
@@ -34,6 +36,13 @@ class BreathingAnimationWidget extends StatelessWidget {
   /// 0.0–1.0: how much of the lower surfaceDim zone has been emptied
   /// during the extension phase of a deep exhale (grows from top to bottom).
   final double deepZoneFill;
+
+  /// When true, the upper zone is part of the deep-inhale animation.
+  final bool isExtendedInhale;
+
+  /// 0.0–1.0: how much of the upper surfaceDim zone has been filled
+  /// during the extension phase of a deep inhale (grows from bottom to top).
+  final double topZoneFill;
 
   /// Circle diameter as a fraction of bar height.
   static const double kCircleRatio = 0.375;
@@ -66,7 +75,22 @@ class BreathingAnimationWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(radius - 1),
               child: Column(
                 children: [
-                  Flexible(flex: 2, child: Container(color: colors.surfaceDim)),
+                  Flexible(
+                    flex: 2,
+                    child: Stack(
+                      children: [
+                        Container(color: colors.surfaceDim),
+                        if (topZoneFill > 0.0)
+                          Align(
+                            alignment: Alignment.bottomCenter,
+                            child: FractionallySizedBox(
+                              heightFactor: topZoneFill.clamp(0.0, 1.0),
+                              child: Container(color: colors.accent),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                   Flexible(
                     flex: 6,
                     child: Stack(
