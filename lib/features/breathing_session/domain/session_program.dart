@@ -1,0 +1,120 @@
+import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
+import 'package:breathscape/features/breathing_session/domain/phase_progression.dart';
+import 'package:breathscape/features/breathing_session/domain/resolved_timeline.dart';
+import 'package:equatable/equatable.dart';
+
+/// A phase definition within a segment: which phase type runs, and how its
+/// duration evolves across cycles.
+final class PhaseSpec extends Equatable {
+  const PhaseSpec({required this.type, required this.progression});
+
+  factory PhaseSpec.fromJson(Map<String, dynamic> json) => PhaseSpec(
+    type: phaseTypeFromString(json['type'] as String),
+    progression: PhaseProgression.fromJson(
+      json['progression'] as Map<String, dynamic>,
+    ),
+  );
+
+  final PhaseType type;
+  final PhaseProgression progression;
+
+  Map<String, dynamic> toJson() => {
+    'type': phaseTypeToString(type),
+    'progression': progression.toJson(),
+  };
+
+  @override
+  List<Object?> get props => [type, progression];
+}
+
+/// A named group of cycles that share a phase structure.
+///
+/// [cycleSpecs] holds one or more cycle templates. If there is only one
+/// template it applies uniformly to all cycles. Multiple templates are applied
+/// via modulo wrapping, enabling alternating or periodic patterns.
+final class SessionSegment extends Equatable {
+  const SessionSegment({
+    required this.label,
+    required this.cycleCount,
+    required this.cycleSpecs,
+  });
+
+  factory SessionSegment.fromJson(Map<String, dynamic> json) {
+    final rawCycleSpecs = json['cycleSpecs'] as List<dynamic>;
+    return SessionSegment(
+      label: json['label'] as String,
+      cycleCount: json['cycleCount'] as int,
+      cycleSpecs: rawCycleSpecs.map((rawSpecs) {
+        final specs = rawSpecs as List<dynamic>;
+        return specs
+            .map((raw) => PhaseSpec.fromJson(raw as Map<String, dynamic>))
+            .toList();
+      }).toList(),
+    );
+  }
+
+  final String label;
+  final int cycleCount;
+
+  /// Length 1 → uniform; length N → alternating via modulo.
+  final List<List<PhaseSpec>> cycleSpecs;
+
+  /// Returns the phase specs for [cycleInSegment] (0-based).
+  List<PhaseSpec> phasesForCycle(int cycleInSegment) =>
+      cycleSpecs[cycleInSegment % cycleSpecs.length];
+
+  Map<String, dynamic> toJson() => {
+    'label': label,
+    'cycleCount': cycleCount,
+    'cycleSpecs': cycleSpecs
+        .map((specs) => specs.map((s) => s.toJson()).toList())
+        .toList(),
+  };
+
+  @override
+  List<Object?> get props => [label, cycleCount, cycleSpecs];
+}
+
+/// Top-level session definition: an ordered list of segments that together
+/// form a complete breathing session.
+final class SessionProgram extends Equatable {
+  const SessionProgram({required this.name, required this.segments});
+
+  factory SessionProgram.fromJson(Map<String, dynamic> json) => SessionProgram(
+    name: json['name'] as String,
+    segments: (json['segments'] as List<dynamic>)
+        .map((s) => SessionSegment.fromJson(s as Map<String, dynamic>))
+        .toList(),
+  );
+
+  final String name;
+  final List<SessionSegment> segments;
+
+  int get totalCycles => segments.fold(0, (sum, seg) => sum + seg.cycleCount);
+
+  /// Expands all segments into a flat [ResolvedTimeline] with concrete phase
+  /// durations. Called once at session start; the result is immutable.
+  ResolvedTimeline resolve() {
+    final cycles = <ResolvedCycle>[];
+    for (final segment in segments) {
+      for (var c = 0; c < segment.cycleCount; c++) {
+        final phases = segment.phasesForCycle(c).map((spec) {
+          return BreathingPhase(
+            type: spec.type,
+            duration: spec.progression.durationFor(c),
+          );
+        }).toList();
+        cycles.add(ResolvedCycle(segmentLabel: segment.label, phases: phases));
+      }
+    }
+    return ResolvedTimeline(name: name, cycles: cycles);
+  }
+
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'segments': segments.map((s) => s.toJson()).toList(),
+  };
+
+  @override
+  List<Object?> get props => [name, segments];
+}

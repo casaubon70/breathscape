@@ -14,30 +14,37 @@ enum PhaseType {
 const int kMinPhaseDurationSeconds = 1;
 const int kMaxPhaseDurationSeconds = 99;
 
+PhaseType phaseTypeFromString(String value) => switch (value) {
+  'inhale' => PhaseType.inhale,
+  'hold_in' => PhaseType.holdIn,
+  'exhale' => PhaseType.exhale,
+  'extended_inhale' => PhaseType.extendedInhale,
+  'extended_exhale' => PhaseType.extendedExhale,
+  'hold_out' => PhaseType.holdOut,
+  _ => throw ArgumentError('Unknown phase type: $value'),
+};
+
+String phaseTypeToString(PhaseType type) => switch (type) {
+  PhaseType.inhale => 'inhale',
+  PhaseType.holdIn => 'hold_in',
+  PhaseType.exhale => 'exhale',
+  PhaseType.extendedInhale => 'extended_inhale',
+  PhaseType.extendedExhale => 'extended_exhale',
+  PhaseType.holdOut => 'hold_out',
+};
+
 class BreathingPhase extends Equatable {
   const BreathingPhase({required this.type, required this.duration});
 
   factory BreathingPhase.fromMap(Map<dynamic, dynamic> map) {
     return BreathingPhase(
-      type: _typeFromString(map['type'] as String),
+      type: phaseTypeFromString(map['type'] as String),
       duration: Duration(seconds: map['seconds'] as int),
     );
   }
 
   final PhaseType type;
   final Duration duration;
-
-  static PhaseType _typeFromString(String value) {
-    return switch (value) {
-      'inhale' => PhaseType.inhale,
-      'hold_in' => PhaseType.holdIn,
-      'exhale' => PhaseType.exhale,
-      'extended_inhale' => PhaseType.extendedInhale,
-      'extended_exhale' => PhaseType.extendedExhale,
-      'hold_out' => PhaseType.holdOut,
-      _ => throw ArgumentError('Unknown phase type: $value'),
-    };
-  }
 
   @override
   List<Object> get props => [type, duration];
