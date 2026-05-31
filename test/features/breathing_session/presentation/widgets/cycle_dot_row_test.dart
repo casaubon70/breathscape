@@ -28,7 +28,7 @@ void main() {
           const CycleDotRow(
             totalCycles: 6,
             currentCycle: 1,
-            extendedExhaleInterval: 3,
+            extendedExhaleCycles: {3, 6},
           ),
         ),
       );
@@ -47,7 +47,7 @@ void main() {
           const CycleDotRow(
             totalCycles: 6,
             currentCycle: 1,
-            extendedInhaleInterval: 3,
+            extendedInhaleCycles: {3, 6},
           ),
         ),
       );
@@ -60,7 +60,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('shows arrowsUpDown icon when both intervals share a cycle', (
+    testWidgets('shows arrowsUpDown icon when a cycle has both types', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -68,22 +68,22 @@ void main() {
           const CycleDotRow(
             totalCycles: 6,
             currentCycle: 1,
-            extendedExhaleInterval: 3,
-            extendedInhaleInterval: 2,
+            extendedExhaleCycles: {3, 6},
+            extendedInhaleCycles: {2, 4, 6},
           ),
         ),
       );
-      // Cycle 6 is divisible by both 3 and 2 → arrowsUpDown
+      // Cycle 6 is in both sets → arrowsUpDown
       final icons = tester.widgetList<FaIcon>(find.byType(FaIcon)).toList();
       expect(
         _hasIcon(icons, FontAwesomeIcons.arrowsUpDown),
         isTrue,
-        reason: 'cycle divisible by both intervals should show arrowsUpDown',
+        reason: 'cycle in both sets should show arrowsUpDown',
       );
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('renders without error when no intervals are set', (
+    testWidgets('renders without error when no extended cycles are set', (
       tester,
     ) async {
       await tester.pumpWidget(

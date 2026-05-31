@@ -21,6 +21,13 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
         currentPhase: firstPhase.type,
         phaseSecondsRemaining: firstPhase.duration.inSeconds,
         sessionSecondsRemaining: timeline.totalSeconds,
+        totalCycles: timeline.cycles.length,
+        showTopCircle: _hasPhaseType(timeline, PhaseType.holdIn),
+        showBottomCircle: _hasPhaseType(timeline, PhaseType.holdOut),
+        extendedExhaleCycles:
+            _extendedCycles(timeline, PhaseType.extendedExhale),
+        extendedInhaleCycles:
+            _extendedCycles(timeline, PhaseType.extendedInhale),
       ),
     );
   }
@@ -38,6 +45,19 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     on<PatternSelected>(_onPatternSelected);
     on<PhaseCompleted>(_onPhaseCompleted);
     on<BreathingTickUpdated>(_onTickUpdated);
+  }
+
+  static bool _hasPhaseType(ResolvedTimeline timeline, PhaseType type) =>
+      timeline.cycles.any((c) => c.phases.any((p) => p.type == type));
+
+  static Set<int> _extendedCycles(ResolvedTimeline timeline, PhaseType type) {
+    final result = <int>{};
+    for (var i = 0; i < timeline.cycles.length; i++) {
+      if (timeline.cycles[i].phases.any((p) => p.type == type)) {
+        result.add(i + 1);
+      }
+    }
+    return result;
   }
 
   SessionProgram _program;
@@ -121,6 +141,11 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
         currentPhase: firstPhase.type,
         phaseSecondsRemaining: firstPhase.duration.inSeconds,
         sessionSecondsRemaining: _timeline.totalSeconds,
+        totalCycles: state.totalCycles,
+        showTopCircle: state.showTopCircle,
+        showBottomCircle: state.showBottomCircle,
+        extendedExhaleCycles: state.extendedExhaleCycles,
+        extendedInhaleCycles: state.extendedInhaleCycles,
       ),
     );
   }
@@ -145,6 +170,13 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
         currentPhase: firstPhase.type,
         phaseSecondsRemaining: firstPhase.duration.inSeconds,
         sessionSecondsRemaining: _timeline.totalSeconds,
+        totalCycles: _timeline.cycles.length,
+        showTopCircle: _hasPhaseType(_timeline, PhaseType.holdIn),
+        showBottomCircle: _hasPhaseType(_timeline, PhaseType.holdOut),
+        extendedExhaleCycles:
+            _extendedCycles(_timeline, PhaseType.extendedExhale),
+        extendedInhaleCycles:
+            _extendedCycles(_timeline, PhaseType.extendedInhale),
       ),
     );
   }

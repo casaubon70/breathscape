@@ -137,17 +137,20 @@ class _BreathingSessionView extends StatelessWidget {
                         BlocBuilder<BreathingBloc, BreathingState>(
                           buildWhen: (prev, curr) =>
                               prev.currentCycle != curr.currentCycle ||
-                              prev.selectedPattern != curr.selectedPattern,
+                              prev.totalCycles != curr.totalCycles ||
+                              prev.extendedExhaleCycles !=
+                                  curr.extendedExhaleCycles ||
+                              prev.extendedInhaleCycles !=
+                                  curr.extendedInhaleCycles,
                           builder: (context, dotState) => Padding(
                             padding: EdgeInsets.only(bottom: spacing.m),
                             child: CycleDotRow(
-                              totalCycles:
-                                  dotState.selectedPattern.defaultCycles,
+                              totalCycles: dotState.totalCycles,
                               currentCycle: dotState.currentCycle,
-                              extendedExhaleInterval: dotState
-                                  .selectedPattern.extendedExhaleInterval,
-                              extendedInhaleInterval: dotState
-                                  .selectedPattern.extendedInhaleInterval,
+                              extendedExhaleCycles:
+                                  dotState.extendedExhaleCycles,
+                              extendedInhaleCycles:
+                                  dotState.extendedInhaleCycles,
                             ),
                           ),
                         ),
@@ -201,10 +204,10 @@ class _BreathingSessionView extends StatelessWidget {
                         child: BlocBuilder<BreathingBloc, BreathingState>(
                           buildWhen: (prev, curr) =>
                               prev.currentCycle != curr.currentCycle ||
-                              prev.selectedPattern != curr.selectedPattern,
+                              prev.totalCycles != curr.totalCycles,
                           builder: (context, state) => CycleCounter(
                             current: state.currentCycle,
-                            total: state.selectedPattern.defaultCycles,
+                            total: state.totalCycles,
                           ),
                         ),
                       ),
@@ -229,7 +232,8 @@ class _BreathingSessionView extends StatelessWidget {
       prev.deepZoneFill != curr.deepZoneFill ||
       prev.topZoneFill != curr.topZoneFill ||
       prev.status != curr.status ||
-      prev.selectedPattern != curr.selectedPattern;
+      prev.showTopCircle != curr.showTopCircle ||
+      prev.showBottomCircle != curr.showBottomCircle;
 
   static Widget _buildAnimWidget(
     BreathingState state,
@@ -250,12 +254,8 @@ class _BreathingSessionView extends StatelessWidget {
         deepZoneFill: state.deepZoneFill,
         isExtendedInhale: state.isExtendedInhale,
         topZoneFill: state.topZoneFill,
-        showTopCircle: state.selectedPattern.phases.any(
-          (p) => p.type == PhaseType.holdIn,
-        ),
-        showBottomCircle: state.selectedPattern.phases.any(
-          (p) => p.type == PhaseType.holdOut,
-        ),
+        showTopCircle: state.showTopCircle,
+        showBottomCircle: state.showBottomCircle,
       ),
     );
   }

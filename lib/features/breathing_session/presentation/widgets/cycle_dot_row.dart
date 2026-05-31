@@ -6,15 +6,19 @@ class CycleDotRow extends StatelessWidget {
   const CycleDotRow({
     required this.totalCycles,
     required this.currentCycle,
-    this.extendedExhaleInterval,
-    this.extendedInhaleInterval,
+    this.extendedExhaleCycles = const <int>{},
+    this.extendedInhaleCycles = const <int>{},
     super.key,
   });
 
   final int totalCycles;
   final int currentCycle;
-  final int? extendedExhaleInterval;
-  final int? extendedInhaleInterval;
+
+  /// 1-based cycle indices that should display a deep-exhale arrow.
+  final Set<int> extendedExhaleCycles;
+
+  /// 1-based cycle indices that should display a deep-inhale arrow.
+  final Set<int> extendedInhaleCycles;
 
   static const double _dotSmall = 6;
 
@@ -28,16 +32,6 @@ class CycleDotRow extends StatelessWidget {
   /// reserve this height rather than [dotLarge].
   static const double rowHeight = _arrowLarge;
 
-  bool _isDeepExhaleCycle(int cycle) {
-    final interval = extendedExhaleInterval;
-    return interval != null && interval > 0 && cycle % interval == 0;
-  }
-
-  bool _isDeepInhaleCycle(int cycle) {
-    final interval = extendedInhaleInterval;
-    return interval != null && interval > 0 && cycle % interval == 0;
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.bTheme.colors;
@@ -50,8 +44,8 @@ class CycleDotRow extends StatelessWidget {
       children: List.generate(totalCycles, (index) {
         final cycle = index + 1;
         final isCurrent = cycle == currentCycle;
-        final isDeepExhale = _isDeepExhaleCycle(cycle);
-        final isDeepInhale = _isDeepInhaleCycle(cycle);
+        final isDeepExhale = extendedExhaleCycles.contains(cycle);
+        final isDeepInhale = extendedInhaleCycles.contains(cycle);
         final isDeep = isDeepExhale || isDeepInhale;
 
         final baseColor = isDeep ? colors.signal : colors.accent;
