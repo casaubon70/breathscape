@@ -4,7 +4,11 @@ import 'package:breathscape/features/breathing_session/bloc/breathing_event.dart
 import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
+import 'package:breathscape/features/breathing_session/domain/pattern_migration.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+BreathingBloc _bloc(BreathingPattern p) =>
+    BreathingBloc(program: migratePatternToProgram(p));
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +26,7 @@ void main() {
   group('BreathingBloc – Play/Pause (Scheibe 2)', () {
     late BreathingBloc bloc;
 
-    setUp(() => bloc = BreathingBloc(pattern: pattern));
+    setUp(() => bloc = _bloc(pattern));
     tearDown(() => bloc.close());
 
     test('initial state is idle with fillLevel 0.0', () {
@@ -34,7 +38,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'PlayPressed from idle → playing',
-      build: () => BreathingBloc(pattern: pattern),
+      build: () => _bloc(pattern),
       act: (bloc) => bloc.add(const PlayPressed()),
       expect: () => [
         isA<BreathingState>().having(
@@ -47,7 +51,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'PausePressed while playing → paused',
-      build: () => BreathingBloc(pattern: pattern),
+      build: () => _bloc(pattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const PausePressed()),
@@ -67,7 +71,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'PlayPressed from paused → playing',
-      build: () => BreathingBloc(pattern: pattern),
+      build: () => _bloc(pattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const PausePressed())
@@ -84,14 +88,14 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'PausePressed while idle → no state change',
-      build: () => BreathingBloc(pattern: pattern),
+      build: () => _bloc(pattern),
       act: (bloc) => bloc.add(const PausePressed()),
       expect: () => <BreathingState>[],
     );
 
     blocTest<BreathingBloc, BreathingState>(
       'PhaseCompleted advances phase: inhale → holdIn',
-      build: () => BreathingBloc(pattern: pattern),
+      build: () => _bloc(pattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const PhaseCompleted()),
@@ -107,7 +111,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'PhaseCompleted cycles through all four phases',
-      build: () => BreathingBloc(pattern: pattern),
+      build: () => _bloc(pattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const PhaseCompleted()) // holdIn
@@ -139,7 +143,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'PhaseCompleted while paused → no state change',
-      build: () => BreathingBloc(pattern: pattern),
+      build: () => _bloc(pattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const PausePressed())
@@ -161,7 +165,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'nach defaultCycles via PhaseCompleted → status completed, fillLevel 0',
-      build: () => BreathingBloc(pattern: singleCyclePattern),
+      build: () => _bloc(singleCyclePattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const PhaseCompleted()) // exhale
@@ -181,7 +185,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'nach defaultCycles via Tick → status completed, fillLevel 0',
-      build: () => BreathingBloc(pattern: singleCyclePattern),
+      build: () => _bloc(singleCyclePattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale
@@ -201,7 +205,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'ResetPressed aus completed → idle, Zyklus 1',
-      build: () => BreathingBloc(pattern: singleCyclePattern),
+      build: () => _bloc(singleCyclePattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const PhaseCompleted())
@@ -217,8 +221,8 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'mit defaultCycles 2 läuft zweiter Zyklus noch durch',
-      build: () => BreathingBloc(
-        pattern: const BreathingPattern(
+      build: () => _bloc(
+        const BreathingPattern(
           name: 'Two Cycles',
           defaultCycles: 2,
           phases: [
@@ -274,7 +278,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'cycle 1: exhale → normal exhale (no extended)',
-      build: () => BreathingBloc(pattern: extPattern),
+      build: () => _bloc(extPattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const PhaseCompleted()), // → exhale on cycle 1
@@ -289,7 +293,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'cycle 3: exhale → extendedExhale with +2 s duration',
-      build: () => BreathingBloc(pattern: extPattern),
+      build: () => _bloc(extPattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const PhaseCompleted()) // exhale c1
@@ -324,7 +328,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'cycle 3 via Tick: middle fills 1→0 at threshold, deep zone fills after',
-      build: () => BreathingBloc(pattern: extPattern),
+      build: () => _bloc(extPattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale c1
@@ -371,7 +375,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'cycle 3: deepZoneFill grows after middle zone is empty',
-      build: () => BreathingBloc(pattern: extPattern),
+      build: () => _bloc(extPattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale c1
@@ -400,7 +404,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'isExtendedExhale resets to false on next inhale',
-      build: () => BreathingBloc(pattern: extPattern),
+      build: () => _bloc(extPattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const PhaseCompleted()) // exhale c1
@@ -420,7 +424,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'inhale after deep exhale starts with deepZoneFill=1, fillLevel=0',
-      build: () => BreathingBloc(pattern: extPattern),
+      build: () => _bloc(extPattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const PhaseCompleted()) // exhale c1
@@ -440,7 +444,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'deep inhale via Tick: lower zone clears first, then middle zone fills',
-      build: () => BreathingBloc(pattern: extPattern),
+      build: () => _bloc(extPattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale c1
@@ -468,7 +472,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'deep inhale: at progress=0.625 fillLevel=0.5, deepZoneFill=0',
-      build: () => BreathingBloc(pattern: extPattern),
+      build: () => _bloc(extPattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale c1
@@ -508,7 +512,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'cycle 1: inhale → normal inhale (no extended)',
-      build: () => BreathingBloc(pattern: extInhalePattern),
+      build: () => _bloc(extInhalePattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const PhaseCompleted()) // → exhale c1
@@ -527,7 +531,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'cycle 3: inhale → extendedInhale with +2 s duration',
-      build: () => BreathingBloc(pattern: extInhalePattern),
+      build: () => _bloc(extInhalePattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const PhaseCompleted()) // exhale c1
@@ -558,7 +562,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'cycle 3 via Tick: middle fills 0→1 at threshold, top zone fills after',
-      build: () => BreathingBloc(pattern: extInhalePattern),
+      build: () => _bloc(extInhalePattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale c1
@@ -601,7 +605,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'cycle 3: topZoneFill grows after middle zone is full',
-      build: () => BreathingBloc(pattern: extInhalePattern),
+      build: () => _bloc(extInhalePattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale c1
@@ -625,7 +629,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'isExtendedInhale resets to false on next exhale',
-      build: () => BreathingBloc(pattern: extInhalePattern),
+      build: () => _bloc(extInhalePattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const PhaseCompleted()) // exhale c1
@@ -644,7 +648,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'exhale after deep inhale starts with topZoneFill=1, fillLevel=1',
-      build: () => BreathingBloc(pattern: extInhalePattern),
+      build: () => _bloc(extInhalePattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const PhaseCompleted()) // exhale c1
@@ -663,7 +667,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'recovery exhale via Tick: top clears first, then middle empties',
-      build: () => BreathingBloc(pattern: extInhalePattern),
+      build: () => _bloc(extInhalePattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale c1
@@ -690,7 +694,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'recovery exhale: at progress=0.625 fillLevel=0.5, topZoneFill=0',
-      build: () => BreathingBloc(pattern: extInhalePattern),
+      build: () => _bloc(extInhalePattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → exhale c1
@@ -717,7 +721,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'session seconds includes +2 s on deep-inhale cycles',
-      build: () => BreathingBloc(pattern: extInhalePattern),
+      build: () => _bloc(extInhalePattern),
       act: (bloc) {},
       expect: () => <BreathingState>[],
       verify: (bloc) {
@@ -731,7 +735,7 @@ void main() {
   group('BreathingBloc – Ticker-Logik (Scheibe 4)', () {
     blocTest<BreathingBloc, BreathingState>(
       'Tick mit halbem Delta → fillLevel 0.5 (Inhale-Phase)',
-      build: () => BreathingBloc(pattern: pattern),
+      build: () => _bloc(pattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const BreathingTickUpdated(Duration(seconds: 2))),
@@ -745,7 +749,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'Tick mit vollem Delta → Phase wechselt zu holdIn, fillLevel 1.0',
-      build: () => BreathingBloc(pattern: pattern),
+      build: () => _bloc(pattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const BreathingTickUpdated(Duration(seconds: 4))),
@@ -759,7 +763,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'holdIn-Phase: fillLevel bleibt 1.0, circleScale nimmt ab',
-      build: () => BreathingBloc(pattern: pattern),
+      build: () => _bloc(pattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → holdIn
@@ -779,7 +783,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'exhale-Phase: fillLevel fällt von 1.0 auf 0.0',
-      build: () => BreathingBloc(pattern: pattern),
+      build: () => _bloc(pattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → holdIn
@@ -803,7 +807,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'ein vollständiger Zyklus → currentCycle 2, zurück in inhale',
-      build: () => BreathingBloc(pattern: pattern),
+      build: () => _bloc(pattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → holdIn
@@ -835,7 +839,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'Tick während Pause → kein State-Update',
-      build: () => BreathingBloc(pattern: pattern),
+      build: () => _bloc(pattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const PausePressed())
@@ -846,7 +850,7 @@ void main() {
 
     blocTest<BreathingBloc, BreathingState>(
       'ResetPressed → Initialzustand, Zyklus 1, Phase inhale',
-      build: () => BreathingBloc(pattern: pattern),
+      build: () => _bloc(pattern),
       act: (bloc) => bloc
         ..add(const PlayPressed())
         ..add(const BreathingTickUpdated(Duration(seconds: 4))) // → holdIn

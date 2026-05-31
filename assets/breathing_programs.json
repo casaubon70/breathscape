@@ -1,0 +1,163 @@
+{
+  "programs": [
+    {
+      "name": "Box Breathing",
+      "segments": [
+        {
+          "label": "Box Breathing",
+          "cycleCount": 10,
+          "cycleSpecs": [
+            [
+              {"type": "inhale",    "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "hold_in",   "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "exhale",    "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "hold_out",  "progression": {"kind": "fixed", "seconds": 4}}
+            ],
+            [
+              {"type": "inhale",    "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "hold_in",   "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "exhale",    "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "hold_out",  "progression": {"kind": "fixed", "seconds": 4}}
+            ],
+            [
+              {"type": "inhale",           "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "hold_in",          "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "extended_exhale",  "progression": {"kind": "fixed", "seconds": 6}},
+              {"type": "hold_out",         "progression": {"kind": "fixed", "seconds": 4}}
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4-7-8 Breathing",
+      "segments": [
+        {
+          "label": "4-7-8",
+          "cycleCount": 10,
+          "cycleSpecs": [
+            [
+              {"type": "inhale",   "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "hold_in",  "progression": {"kind": "fixed", "seconds": 7}},
+              {"type": "exhale",   "progression": {"kind": "fixed", "seconds": 8}}
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Coherent Breathing",
+      "segments": [
+        {
+          "label": "Coherent",
+          "cycleCount": 10,
+          "cycleSpecs": [
+            [
+              {"type": "inhale",  "progression": {"kind": "fixed", "seconds": 5}},
+              {"type": "exhale",  "progression": {"kind": "fixed", "seconds": 5}}
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Deep Exhale Flow",
+      "segments": [
+        {
+          "label": "Flow",
+          "cycleCount": 10,
+          "cycleSpecs": [
+            [
+              {"type": "inhale",  "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "exhale",  "progression": {"kind": "fixed", "seconds": 4}}
+            ],
+            [
+              {"type": "inhale",          "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "extended_exhale", "progression": {"kind": "fixed", "seconds": 6}}
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Progressive Hold",
+      "segments": [
+        {
+          "label": "Warm-up",
+          "cycleCount": 3,
+          "cycleSpecs": [
+            [
+              {"type": "inhale",    "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "hold_in",   "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "exhale",    "progression": {"kind": "fixed", "seconds": 6}},
+              {"type": "hold_out",  "progression": {"kind": "fixed", "seconds": 2}}
+            ]
+          ]
+        },
+        {
+          "label": "Progression",
+          "cycleCount": 6,
+          "cycleSpecs": [
+            [
+              {"type": "inhale",   "progression": {"kind": "fixed",  "seconds": 4}},
+              {"type": "hold_in",  "progression": {"kind": "linear", "startSeconds": 4, "stepSeconds": 0.5, "maxSeconds": 6}},
+              {"type": "exhale",   "progression": {"kind": "fixed",  "seconds": 6}},
+              {"type": "hold_out", "progression": {"kind": "fixed",  "seconds": 2}}
+            ]
+          ]
+        },
+        {
+          "label": "Cool-down",
+          "cycleCount": 3,
+          "cycleSpecs": [
+            [
+              {"type": "inhale",    "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "hold_in",   "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "exhale",    "progression": {"kind": "fixed", "seconds": 6}},
+              {"type": "hold_out",  "progression": {"kind": "fixed", "seconds": 2}}
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Breathing Journey",
+      "segments": [
+        {
+          "label": "Warm-up",
+          "cycleCount": 4,
+          "cycleSpecs": [
+            [
+              {"type": "inhale",  "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "exhale",  "progression": {"kind": "fixed", "seconds": 4}}
+            ]
+          ]
+        },
+        {
+          "label": "Deep Work",
+          "cycleCount": 6,
+          "cycleSpecs": [
+            [
+              {"type": "inhale",  "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "exhale",  "progression": {"kind": "fixed", "seconds": 4}}
+            ],
+            [
+              {"type": "inhale",          "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "extended_exhale", "progression": {"kind": "fixed", "seconds": 6}}
+            ]
+          ]
+        },
+        {
+          "label": "Cool-down",
+          "cycleCount": 4,
+          "cycleSpecs": [
+            [
+              {"type": "inhale",  "progression": {"kind": "fixed", "seconds": 4}},
+              {"type": "exhale",  "progression": {"kind": "fixed", "seconds": 4}}
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

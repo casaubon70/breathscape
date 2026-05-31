@@ -8,8 +8,8 @@ import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart
 import 'package:breathscape/features/breathing_session/bloc/patterns_bloc.dart';
 import 'package:breathscape/features/breathing_session/bloc/patterns_event.dart';
 import 'package:breathscape/features/breathing_session/bloc/patterns_state.dart';
-import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
+import 'package:breathscape/features/breathing_session/domain/session_program.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/breathing_animation_widget.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/cycle_counter.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/cycle_dot_row.dart';
@@ -23,15 +23,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class BreathingSessionPage extends StatelessWidget {
-  const BreathingSessionPage({super.key, this.patternsLoader});
+  const BreathingSessionPage({super.key, this.programsLoader});
 
-  final Future<List<BreathingPattern>> Function()? patternsLoader;
+  final Future<List<SessionProgram>> Function()? programsLoader;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider<PatternsBloc>(
       create: (_) =>
-          PatternsBloc(baseLoader: patternsLoader)..add(const PatternsLoaded()),
+          PatternsBloc(programsLoader: programsLoader)
+            ..add(const PatternsLoaded()),
       child: BlocBuilder<PatternsBloc, PatternsState>(
         buildWhen: (prev, curr) => prev.status != curr.status,
         builder: (context, state) {
@@ -47,7 +48,7 @@ class BreathingSessionPage extends StatelessWidget {
           return MultiBlocProvider(
             providers: [
               BlocProvider(
-                create: (_) => BreathingBloc(pattern: state.patterns.first),
+                create: (_) => BreathingBloc(program: state.programs.first),
               ),
               BlocProvider(create: (_) => AudioBloc()),
             ],
@@ -66,7 +67,7 @@ class _BreathingSessionView extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.bTheme.colors;
     final spacing = context.bTheme.spacing;
-    final patterns = context.watch<PatternsBloc>().state.patterns;
+    final programs = context.watch<PatternsBloc>().state.programs;
 
     return BlocListener<BreathingBloc, BreathingState>(
       listenWhen: (prev, curr) =>
@@ -91,7 +92,7 @@ class _BreathingSessionView extends StatelessWidget {
               Stack(
                 alignment: Alignment.centerLeft,
                 children: [
-                  PatternSelectorButton(patterns: patterns),
+                  PatternSelectorButton(programs: programs),
                   Align(
                     alignment: Alignment.centerRight,
                     child: Padding(

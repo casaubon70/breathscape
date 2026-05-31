@@ -1,4 +1,4 @@
-import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
+import 'package:breathscape/features/breathing_session/domain/session_program.dart';
 import 'package:equatable/equatable.dart';
 
 enum PatternsStatus { initial, loading, ready, failure }
@@ -6,20 +6,20 @@ enum PatternsStatus { initial, loading, ready, failure }
 final class PatternsState extends Equatable {
   const PatternsState({
     this.status = PatternsStatus.initial,
-    this.patterns = const [],
+    this.programs = const <SessionProgram>[],
   });
 
   final PatternsStatus status;
-  final List<BreathingPattern> patterns;
+  final List<SessionProgram> programs;
 
   PatternsState copyWith({
     PatternsStatus? status,
-    List<BreathingPattern>? patterns,
+    List<SessionProgram>? programs,
   }) => PatternsState(
     status: status ?? this.status,
-    patterns: patterns ?? this.patterns,
+    programs: programs ?? this.programs,
   );
 
   @override
-  List<Object?> get props => [status, patterns];
+  List<Object?> get props => [status, programs];
 }

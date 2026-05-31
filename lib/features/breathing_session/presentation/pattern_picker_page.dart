@@ -1,16 +1,16 @@
 import 'package:breathscape/core/theme/app_theme.dart';
-import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
+import 'package:breathscape/features/breathing_session/domain/session_program.dart';
 import 'package:flutter/material.dart';
 
 class PatternPickerPage extends StatelessWidget {
   const PatternPickerPage({
-    required this.patterns,
-    required this.selectedPattern,
+    required this.programs,
+    required this.selectedProgram,
     super.key,
   });
 
-  final List<BreathingPattern> patterns;
-  final BreathingPattern selectedPattern;
+  final List<SessionProgram> programs;
+  final SessionProgram selectedProgram;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +40,7 @@ class PatternPickerPage extends StatelessWidget {
       ),
       body: ListView.separated(
         padding: EdgeInsets.symmetric(vertical: spacing.m),
-        itemCount: patterns.length,
+        itemCount: programs.length,
         separatorBuilder: (_, __) => Divider(
           color: colors.surfaceDim,
           height: 1,
@@ -48,15 +48,15 @@ class PatternPickerPage extends StatelessWidget {
           endIndent: spacing.l,
         ),
         itemBuilder: (context, index) {
-          final pattern = patterns[index];
-          final isSelected = pattern == selectedPattern;
+          final program = programs[index];
+          final isSelected = program == selectedProgram;
           return ListTile(
             contentPadding: EdgeInsets.symmetric(
               horizontal: spacing.l,
               vertical: spacing.s,
             ),
             title: Text(
-              pattern.name,
+              program.name,
               style: typography.dropdownItem.copyWith(
                 color: isSelected ? colors.accent : colors.textSecondary,
               ),
@@ -64,7 +64,7 @@ class PatternPickerPage extends StatelessWidget {
             trailing: isSelected
                 ? Icon(Icons.check, color: colors.accent, size: 18)
                 : null,
-            onTap: () => Navigator.of(context).pop(pattern),
+            onTap: () => Navigator.of(context).pop(program),
           );
         },
       ),

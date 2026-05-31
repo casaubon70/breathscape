@@ -1,4 +1,4 @@
-import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
+import 'package:breathscape/features/breathing_session/domain/session_program.dart';
 import 'package:equatable/equatable.dart';
 
 sealed class BreathingEvent extends Equatable {
@@ -24,16 +24,16 @@ final class PhaseCompleted extends BreathingEvent {
   const PhaseCompleted();
 }
 
-final class PatternSelected extends BreathingEvent {
-  const PatternSelected(this.pattern);
+final class ProgramSelected extends BreathingEvent {
+  const ProgramSelected(this.program);
 
-  final BreathingPattern pattern;
+  final SessionProgram program;
 
   @override
-  List<Object?> get props => [pattern];
+  List<Object?> get props => [program];
 }
 
-/// Internes Event – wird ausschließlich vom Ticker im BreathingBloc gefeuert.
+/// Internal event — fired exclusively by the Ticker inside BreathingBloc.
 final class BreathingTickUpdated extends BreathingEvent {
   const BreathingTickUpdated(this.delta);
 

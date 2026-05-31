@@ -1,12 +1,12 @@
-import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
+import 'package:breathscape/features/breathing_session/domain/session_program.dart';
 import 'package:equatable/equatable.dart';
 
 enum SessionStatus { idle, playing, paused, completed }
 
 final class BreathingState extends Equatable {
   const BreathingState({
-    required this.selectedPattern,
+    required this.selectedProgram,
     this.status = SessionStatus.idle,
     this.currentPhase = PhaseType.inhale,
     this.fillLevel = 0.0,
@@ -26,7 +26,7 @@ final class BreathingState extends Equatable {
     this.topZoneFill = 0.0,
   });
 
-  final BreathingPattern selectedPattern;
+  final SessionProgram selectedProgram;
   final SessionStatus status;
   final PhaseType currentPhase;
   final double fillLevel;
@@ -68,7 +68,7 @@ final class BreathingState extends Equatable {
   final double topZoneFill;
 
   BreathingState copyWith({
-    BreathingPattern? selectedPattern,
+    SessionProgram? selectedProgram,
     SessionStatus? status,
     PhaseType? currentPhase,
     double? fillLevel,
@@ -88,7 +88,7 @@ final class BreathingState extends Equatable {
     double? topZoneFill,
   }) {
     return BreathingState(
-      selectedPattern: selectedPattern ?? this.selectedPattern,
+      selectedProgram: selectedProgram ?? this.selectedProgram,
       status: status ?? this.status,
       currentPhase: currentPhase ?? this.currentPhase,
       fillLevel: fillLevel ?? this.fillLevel,
@@ -113,7 +113,7 @@ final class BreathingState extends Equatable {
 
   @override
   List<Object> get props => [
-    selectedPattern,
+    selectedProgram,
     status,
     currentPhase,
     fillLevel,

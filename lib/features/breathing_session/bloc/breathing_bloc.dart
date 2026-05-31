@@ -1,23 +1,20 @@
 import 'package:breathscape/features/breathing_session/bloc/breathing_event.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart';
-import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
-import 'package:breathscape/features/breathing_session/domain/pattern_migration.dart';
 import 'package:breathscape/features/breathing_session/domain/resolved_timeline.dart';
 import 'package:breathscape/features/breathing_session/domain/session_program.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
-  factory BreathingBloc({required BreathingPattern pattern}) {
-    final program = migratePatternToProgram(pattern);
+  factory BreathingBloc({required SessionProgram program}) {
     final timeline = program.resolve();
     final firstPhase = timeline.cycles.first.phases.first;
     return BreathingBloc._(
       program: program,
       timeline: timeline,
       initialState: BreathingState(
-        selectedPattern: pattern,
+        selectedProgram: program,
         currentPhase: firstPhase.type,
         phaseSecondsRemaining: firstPhase.duration.inSeconds,
         sessionSecondsRemaining: timeline.totalSeconds,
@@ -42,7 +39,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     on<PlayPressed>(_onPlayPressed);
     on<PausePressed>(_onPausePressed);
     on<ResetPressed>(_onResetPressed);
-    on<PatternSelected>(_onPatternSelected);
+    on<ProgramSelected>(_onProgramSelected);
     on<PhaseCompleted>(_onPhaseCompleted);
     on<BreathingTickUpdated>(_onTickUpdated);
   }
@@ -137,7 +134,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     final firstPhase = _timeline.cycles.first.phases.first;
     emit(
       BreathingState(
-        selectedPattern: state.selectedPattern,
+        selectedProgram: state.selectedProgram,
         currentPhase: firstPhase.type,
         phaseSecondsRemaining: firstPhase.duration.inSeconds,
         sessionSecondsRemaining: _timeline.totalSeconds,
@@ -150,12 +147,12 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     );
   }
 
-  void _onPatternSelected(
-    PatternSelected event,
+  void _onProgramSelected(
+    ProgramSelected event,
     Emitter<BreathingState> emit,
   ) {
     _ticker?.stop();
-    _program = migratePatternToProgram(event.pattern);
+    _program = event.program;
     _timeline = _program.resolve();
     _absCycle = 0;
     _phaseIndex = 0;
@@ -166,7 +163,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     final firstPhase = _timeline.cycles.first.phases.first;
     emit(
       BreathingState(
-        selectedPattern: event.pattern,
+        selectedProgram: event.program,
         currentPhase: firstPhase.type,
         phaseSecondsRemaining: firstPhase.duration.inSeconds,
         sessionSecondsRemaining: _timeline.totalSeconds,

@@ -3,15 +3,15 @@ import 'package:breathscape/features/breathing_session/bloc/breathing_bloc.dart'
 import 'package:breathscape/features/breathing_session/bloc/breathing_event.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart'
     show BreathingState;
-import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
+import 'package:breathscape/features/breathing_session/domain/session_program.dart';
 import 'package:breathscape/features/breathing_session/presentation/pattern_picker_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class PatternSelectorButton extends StatelessWidget {
-  const PatternSelectorButton({required this.patterns, super.key});
+  const PatternSelectorButton({required this.programs, super.key});
 
-  final List<BreathingPattern> patterns;
+  final List<SessionProgram> programs;
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,7 @@ class PatternSelectorButton extends StatelessWidget {
     final typography = context.bTheme.typography;
 
     return BlocBuilder<BreathingBloc, BreathingState>(
-      buildWhen: (prev, curr) => prev.selectedPattern != curr.selectedPattern,
+      buildWhen: (prev, curr) => prev.selectedProgram != curr.selectedProgram,
       builder: (context, state) {
         return Align(
           alignment: Alignment.centerLeft,
@@ -34,23 +34,23 @@ class PatternSelectorButton extends StatelessWidget {
             child: GestureDetector(
               onTap: () async {
                 final result = await Navigator.of(context)
-                    .push<BreathingPattern>(
-                      MaterialPageRoute<BreathingPattern>(
+                    .push<SessionProgram>(
+                      MaterialPageRoute<SessionProgram>(
                         builder: (_) => PatternPickerPage(
-                          patterns: patterns,
-                          selectedPattern: state.selectedPattern,
+                          programs: programs,
+                          selectedProgram: state.selectedProgram,
                         ),
                       ),
                     );
                 if (result != null && context.mounted) {
-                  context.read<BreathingBloc>().add(PatternSelected(result));
+                  context.read<BreathingBloc>().add(ProgramSelected(result));
                 }
               },
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    state.selectedPattern.name,
+                    state.selectedProgram.name,
                     style: typography.dropdownItem,
                   ),
                   SizedBox(width: spacing.xs),

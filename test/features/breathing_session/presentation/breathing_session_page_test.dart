@@ -2,6 +2,8 @@ import 'package:breathscape/core/theme/themes/dark_ocean_theme.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
+import 'package:breathscape/features/breathing_session/domain/pattern_migration.dart';
+import 'package:breathscape/features/breathing_session/domain/session_program.dart';
 import 'package:breathscape/features/breathing_session/presentation/breathing_session_page.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/breathing_animation_widget.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/playback_controls.dart';
@@ -9,21 +11,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-const _testPatterns = [
-  BreathingPattern(
-    name: 'Test Pattern',
-    phases: [
-      BreathingPhase(type: PhaseType.inhale, duration: Duration(seconds: 4)),
-      BreathingPhase(type: PhaseType.exhale, duration: Duration(seconds: 4)),
-    ],
+final _testPrograms = [
+  migratePatternToProgram(
+    const BreathingPattern(
+      name: 'Test Pattern',
+      phases: [
+        BreathingPhase(type: PhaseType.inhale, duration: Duration(seconds: 4)),
+        BreathingPhase(type: PhaseType.exhale, duration: Duration(seconds: 4)),
+      ],
+    ),
   ),
 ];
 
-Future<List<BreathingPattern>> _loadTestPatterns() async => _testPatterns;
+Future<List<SessionProgram>> _loadTestPrograms() async => _testPrograms;
 
 Widget _buildPage() => MaterialApp(
   theme: darkOceanTheme.toThemeData(),
-  home: const BreathingSessionPage(patternsLoader: _loadTestPatterns),
+  home: const BreathingSessionPage(programsLoader: _loadTestPrograms),
 );
 
 void main() {
