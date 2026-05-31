@@ -8,7 +8,6 @@ import 'package:breathscape/features/breathing_session/presentation/widgets/play
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 const _testPatterns = [
   BreathingPattern(
@@ -28,8 +27,6 @@ Widget _buildPage() => MaterialApp(
 );
 
 void main() {
-  setUp(() => SharedPreferences.setMockInitialValues({}));
-
   group('BreathingSessionPage', () {
     testWidgets('renders AnimationWidget und PlaybackControls', (tester) async {
       await tester.pumpWidget(_buildPage());
