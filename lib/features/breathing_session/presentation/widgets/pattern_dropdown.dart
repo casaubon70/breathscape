@@ -33,15 +33,14 @@ class PatternSelectorButton extends StatelessWidget {
             ),
             child: GestureDetector(
               onTap: () async {
-                final result = await Navigator.of(context)
-                    .push<SessionProgram>(
-                      MaterialPageRoute<SessionProgram>(
-                        builder: (_) => PatternPickerPage(
-                          programs: programs,
-                          selectedProgram: state.selectedProgram,
-                        ),
-                      ),
-                    );
+                final result = await Navigator.of(context).push<SessionProgram>(
+                  MaterialPageRoute<SessionProgram>(
+                    builder: (_) => PatternPickerPage(
+                      programs: programs,
+                      selectedProgram: state.selectedProgram,
+                    ),
+                  ),
+                );
                 if (result != null && context.mounted) {
                   context.read<BreathingBloc>().add(ProgramSelected(result));
                 }

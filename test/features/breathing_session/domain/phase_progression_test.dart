@@ -26,9 +26,10 @@ void main() {
     });
 
     test('PhaseProgression.fromJson dispatches correctly', () {
-      final result = PhaseProgression.fromJson(
-        const {'kind': 'fixed', 'seconds': 4},
-      );
+      final result = PhaseProgression.fromJson(const {
+        'kind': 'fixed',
+        'seconds': 4,
+      });
       expect(result, isA<FixedProgression>());
     });
   });
