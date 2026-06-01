@@ -2,24 +2,43 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_bloc.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_event.dart';
 import 'package:breathscape/features/breathing_session/bloc/breathing_state.dart';
-import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
-import 'package:breathscape/features/breathing_session/domain/pattern_migration.dart';
+import 'package:breathscape/features/breathing_session/domain/phase_progression.dart';
+import 'package:breathscape/features/breathing_session/domain/session_program.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-BreathingBloc _bloc(BreathingPattern p) =>
-    BreathingBloc(program: migratePatternToProgram(p));
+BreathingBloc _bloc(SessionProgram p) => BreathingBloc(program: p);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const pattern = BreathingPattern(
+  const pattern = SessionProgram(
     name: 'Box Breathing',
-    phases: [
-      BreathingPhase(type: PhaseType.inhale, duration: Duration(seconds: 4)),
-      BreathingPhase(type: PhaseType.holdIn, duration: Duration(seconds: 4)),
-      BreathingPhase(type: PhaseType.exhale, duration: Duration(seconds: 4)),
-      BreathingPhase(type: PhaseType.holdOut, duration: Duration(seconds: 4)),
+    segments: [
+      SessionSegment(
+        label: 'Box Breathing',
+        cycleCount: 10,
+        cycleSpecs: [
+          [
+            PhaseSpec(
+              type: PhaseType.inhale,
+              progression: FixedProgression(Duration(seconds: 4)),
+            ),
+            PhaseSpec(
+              type: PhaseType.holdIn,
+              progression: FixedProgression(Duration(seconds: 4)),
+            ),
+            PhaseSpec(
+              type: PhaseType.exhale,
+              progression: FixedProgression(Duration(seconds: 4)),
+            ),
+            PhaseSpec(
+              type: PhaseType.holdOut,
+              progression: FixedProgression(Duration(seconds: 4)),
+            ),
+          ],
+        ],
+      ),
     ],
   );
 
@@ -154,12 +173,25 @@ void main() {
   });
 
   group('BreathingBloc – Cycle-Completion', () {
-    const singleCyclePattern = BreathingPattern(
+    const singleCyclePattern = SessionProgram(
       name: 'Single Cycle',
-      defaultCycles: 1,
-      phases: [
-        BreathingPhase(type: PhaseType.inhale, duration: Duration(seconds: 4)),
-        BreathingPhase(type: PhaseType.exhale, duration: Duration(seconds: 4)),
+      segments: [
+        SessionSegment(
+          label: 'Single Cycle',
+          cycleCount: 1,
+          cycleSpecs: [
+            [
+              PhaseSpec(
+                type: PhaseType.inhale,
+                progression: FixedProgression(Duration(seconds: 4)),
+              ),
+              PhaseSpec(
+                type: PhaseType.exhale,
+                progression: FixedProgression(Duration(seconds: 4)),
+              ),
+            ],
+          ],
+        ),
       ],
     );
 
@@ -222,17 +254,24 @@ void main() {
     blocTest<BreathingBloc, BreathingState>(
       'mit defaultCycles 2 läuft zweiter Zyklus noch durch',
       build: () => _bloc(
-        const BreathingPattern(
+        const SessionProgram(
           name: 'Two Cycles',
-          defaultCycles: 2,
-          phases: [
-            BreathingPhase(
-              type: PhaseType.inhale,
-              duration: Duration(seconds: 4),
-            ),
-            BreathingPhase(
-              type: PhaseType.exhale,
-              duration: Duration(seconds: 4),
+          segments: [
+            SessionSegment(
+              label: 'Two Cycles',
+              cycleCount: 2,
+              cycleSpecs: [
+                [
+                  PhaseSpec(
+                    type: PhaseType.inhale,
+                    progression: FixedProgression(Duration(seconds: 4)),
+                  ),
+                  PhaseSpec(
+                    type: PhaseType.exhale,
+                    progression: FixedProgression(Duration(seconds: 4)),
+                  ),
+                ],
+              ],
             ),
           ],
         ),
@@ -266,13 +305,45 @@ void main() {
   });
 
   group('BreathingBloc – Extended Exhale', () {
-    const extPattern = BreathingPattern(
+    const extPattern = SessionProgram(
       name: 'Extended Test',
-      defaultCycles: 6,
-      extendedExhaleInterval: 3,
-      phases: [
-        BreathingPhase(type: PhaseType.inhale, duration: Duration(seconds: 4)),
-        BreathingPhase(type: PhaseType.exhale, duration: Duration(seconds: 4)),
+      segments: [
+        SessionSegment(
+          label: 'Extended Test',
+          cycleCount: 6,
+          cycleSpecs: [
+            [
+              PhaseSpec(
+                type: PhaseType.inhale,
+                progression: FixedProgression(Duration(seconds: 4)),
+              ),
+              PhaseSpec(
+                type: PhaseType.exhale,
+                progression: FixedProgression(Duration(seconds: 4)),
+              ),
+            ],
+            [
+              PhaseSpec(
+                type: PhaseType.inhale,
+                progression: FixedProgression(Duration(seconds: 4)),
+              ),
+              PhaseSpec(
+                type: PhaseType.exhale,
+                progression: FixedProgression(Duration(seconds: 4)),
+              ),
+            ],
+            [
+              PhaseSpec(
+                type: PhaseType.inhale,
+                progression: FixedProgression(Duration(seconds: 4)),
+              ),
+              PhaseSpec(
+                type: PhaseType.extendedExhale,
+                progression: FixedProgression(Duration(seconds: 6)),
+              ),
+            ],
+          ],
+        ),
       ],
     );
 
@@ -500,13 +571,45 @@ void main() {
   });
 
   group('BreathingBloc – Extended Inhale', () {
-    const extInhalePattern = BreathingPattern(
+    const extInhalePattern = SessionProgram(
       name: 'Extended Inhale Test',
-      defaultCycles: 6,
-      extendedInhaleInterval: 3,
-      phases: [
-        BreathingPhase(type: PhaseType.inhale, duration: Duration(seconds: 4)),
-        BreathingPhase(type: PhaseType.exhale, duration: Duration(seconds: 4)),
+      segments: [
+        SessionSegment(
+          label: 'Extended Inhale Test',
+          cycleCount: 6,
+          cycleSpecs: [
+            [
+              PhaseSpec(
+                type: PhaseType.inhale,
+                progression: FixedProgression(Duration(seconds: 4)),
+              ),
+              PhaseSpec(
+                type: PhaseType.exhale,
+                progression: FixedProgression(Duration(seconds: 4)),
+              ),
+            ],
+            [
+              PhaseSpec(
+                type: PhaseType.inhale,
+                progression: FixedProgression(Duration(seconds: 4)),
+              ),
+              PhaseSpec(
+                type: PhaseType.exhale,
+                progression: FixedProgression(Duration(seconds: 4)),
+              ),
+            ],
+            [
+              PhaseSpec(
+                type: PhaseType.extendedInhale,
+                progression: FixedProgression(Duration(seconds: 6)),
+              ),
+              PhaseSpec(
+                type: PhaseType.exhale,
+                progression: FixedProgression(Duration(seconds: 4)),
+              ),
+            ],
+          ],
+        ),
       ],
     );
 
