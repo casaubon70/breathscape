@@ -1,3 +1,4 @@
+import 'package:breathscape/core/responsive/breakpoints.dart';
 import 'package:breathscape/core/theme/app_theme.dart';
 import 'package:breathscape/features/audio/bloc/audio_bloc.dart';
 import 'package:breathscape/features/audio/bloc/audio_event.dart';
@@ -121,10 +122,11 @@ class _BreathingSessionView extends StatelessWidget {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final dotsAreaHeight = CycleDotRow.totalHeight + spacing.m;
+                    final isExpanded = Breakpoints.isExpanded(context);
                     final animHeight =
                         ((constraints.maxHeight - dotsAreaHeight) * 0.40).clamp(
                           130.0,
-                          300.0,
+                          isExpanded ? 500.0 : 300.0,
                         );
                     return Column(
                       children: [
@@ -270,6 +272,9 @@ class _BreathingSessionView extends StatelessWidget {
   ) {
     final spacing = context.bTheme.spacing;
     final typography = context.bTheme.typography;
+    final effectiveWidth = Breakpoints.isExpanded(context)
+        ? constraints.maxWidth.clamp(0.0, 480.0)
+        : constraints.maxWidth;
     final animWidth = animHeight * BreathingAnimationWidget.kCircleRatio;
 
     return Column(
@@ -297,7 +302,7 @@ class _BreathingSessionView extends StatelessWidget {
         ),
         SizedBox(height: spacing.l),
         SizedBox(
-          width: constraints.maxWidth,
+          width: effectiveWidth,
           child: Stack(
             alignment: Alignment.center,
             children: [
@@ -309,7 +314,7 @@ class _BreathingSessionView extends StatelessWidget {
               Align(
                 alignment: Alignment.centerRight,
                 child: SizedBox(
-                  width: (constraints.maxWidth - animWidth) / 2,
+                  width: (effectiveWidth - animWidth) / 2,
                   child: const Center(child: VoiceMuteButton()),
                 ),
               ),

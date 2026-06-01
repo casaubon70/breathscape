@@ -2,13 +2,13 @@ import 'package:breathscape/core/theme/bloc/theme_bloc.dart';
 import 'package:breathscape/core/theme/bloc/theme_state.dart';
 import 'package:breathscape/features/breathing_session/presentation/breathing_session_page.dart';
 import 'package:breathscape/l10n/app_localizations.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(const BreathscapeApp());
 }
 
@@ -28,10 +28,36 @@ class BreathscapeApp extends StatelessWidget {
             supportedLocales: AppLocalizations.supportedLocales,
             debugShowCheckedModeBanner: false,
             theme: state.theme.toThemeData(),
+            builder: (context, child) => _OrientationWidget(child: child!),
             home: const BreathingSessionPage(),
           );
         },
       ),
     );
   }
+}
+
+class _OrientationWidget extends StatefulWidget {
+  const _OrientationWidget({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_OrientationWidget> createState() => _OrientationWidgetState();
+}
+
+class _OrientationWidgetState extends State<_OrientationWidget> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final shortestSide = MediaQuery.sizeOf(context).shortestSide;
+    final isIPhone =
+        defaultTargetPlatform == TargetPlatform.iOS && shortestSide < 600;
+    SystemChrome.setPreferredOrientations(
+      isIPhone ? [DeviceOrientation.portraitUp] : DeviceOrientation.values,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

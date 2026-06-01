@@ -1,3 +1,4 @@
+import 'package:breathscape/core/responsive/breakpoints.dart';
 import 'package:breathscape/core/theme/app_theme.dart';
 import 'package:breathscape/features/breathing_session/domain/session_program.dart';
 import 'package:breathscape/l10n/app_localizations.dart';
@@ -16,8 +17,6 @@ class PatternPickerPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.bTheme.colors;
-    final spacing = context.bTheme.spacing;
-    final typography = context.bTheme.typography;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -39,36 +38,64 @@ class PatternPickerPage extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: ListView.separated(
-        padding: EdgeInsets.symmetric(vertical: spacing.m),
-        itemCount: programs.length,
-        separatorBuilder: (_, __) => Divider(
-          color: colors.surfaceDim,
-          height: 1,
-          indent: spacing.l,
-          endIndent: spacing.l,
-        ),
-        itemBuilder: (context, index) {
-          final program = programs[index];
-          final isSelected = program == selectedProgram;
-          return ListTile(
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: spacing.l,
-              vertical: spacing.s,
-            ),
-            title: Text(
-              program.name,
-              style: typography.dropdownItem.copyWith(
-                color: isSelected ? colors.accent : colors.textSecondary,
-              ),
-            ),
-            trailing: isSelected
-                ? Icon(Icons.check, color: colors.accent, size: 18)
-                : null,
-            onTap: () => Navigator.of(context).pop(program),
-          );
-        },
+      body: Breakpoints.isExpanded(context)
+          ? _buildGrid(context)
+          : _buildList(context),
+    );
+  }
+
+  Widget _buildList(BuildContext context) {
+    final colors = context.bTheme.colors;
+    final spacing = context.bTheme.spacing;
+    return ListView.separated(
+      padding: EdgeInsets.symmetric(vertical: spacing.m),
+      itemCount: programs.length,
+      separatorBuilder: (_, __) => Divider(
+        color: colors.surfaceDim,
+        height: 1,
+        indent: spacing.l,
+        endIndent: spacing.l,
       ),
+      itemBuilder: _buildTile,
+    );
+  }
+
+  Widget _buildGrid(BuildContext context) {
+    final spacing = context.bTheme.spacing;
+    return GridView.builder(
+      padding: EdgeInsets.all(spacing.m),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 4.5,
+        crossAxisSpacing: 1,
+        mainAxisSpacing: 1,
+      ),
+      itemCount: programs.length,
+      itemBuilder: _buildTile,
+    );
+  }
+
+  Widget _buildTile(BuildContext context, int index) {
+    final colors = context.bTheme.colors;
+    final spacing = context.bTheme.spacing;
+    final typography = context.bTheme.typography;
+    final program = programs[index];
+    final isSelected = program == selectedProgram;
+    return ListTile(
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: spacing.l,
+        vertical: spacing.s,
+      ),
+      title: Text(
+        program.name,
+        style: typography.dropdownItem.copyWith(
+          color: isSelected ? colors.accent : colors.textSecondary,
+        ),
+      ),
+      trailing: isSelected
+          ? Icon(Icons.check, color: colors.accent, size: 18)
+          : null,
+      onTap: () => Navigator.of(context).pop(program),
     );
   }
 }
