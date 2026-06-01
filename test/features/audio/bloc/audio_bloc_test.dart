@@ -25,7 +25,8 @@ void main() {
     when(() => mockPlayer.dispose()).thenAnswer((_) async {});
   });
 
-  AudioBloc buildBloc() => AudioBloc(voicePlayer: mockPlayer);
+  AudioBloc buildBloc() =>
+      AudioBloc(voicePlayer: mockPlayer, noisePlayer: mockPlayer);
 
   group('AudioBloc', () {
     test('initial state is AudioState(idle)', () {
