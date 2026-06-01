@@ -6,6 +6,7 @@ import 'package:breathscape/features/breathing_session/domain/session_program.da
 import 'package:breathscape/features/breathing_session/presentation/breathing_session_page.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/breathing_animation_widget.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/playback_controls.dart';
+import 'package:breathscape/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -36,6 +37,8 @@ Future<List<SessionProgram>> _loadTestPrograms() async => _testPrograms;
 
 Widget _buildPage() => MaterialApp(
   theme: darkOceanTheme.toThemeData(),
+  localizationsDelegates: AppLocalizations.localizationsDelegates,
+  supportedLocales: AppLocalizations.supportedLocales,
   home: const BreathingSessionPage(programsLoader: _loadTestPrograms),
 );
 

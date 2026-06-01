@@ -1,4 +1,5 @@
 import 'package:breathscape/core/theme/app_theme.dart';
+import 'package:breathscape/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -19,7 +20,7 @@ class SettingsPage extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'SETTINGS',
+          AppLocalizations.of(context)!.settingsTitle,
           style: TextStyle(
             color: colors.textHint,
             fontSize: 12,

@@ -18,6 +18,7 @@ import 'package:breathscape/features/breathing_session/presentation/widgets/patt
 import 'package:breathscape/features/breathing_session/presentation/widgets/playback_controls.dart';
 import 'package:breathscape/features/breathing_session/presentation/widgets/session_countdown.dart';
 import 'package:breathscape/features/settings/presentation/settings_page.dart';
+import 'package:breathscape/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -147,8 +148,7 @@ class _BreathingSessionView extends StatelessWidget {
                           builder: (context, dotState) => Padding(
                             padding: EdgeInsets.only(bottom: spacing.m),
                             child: CycleDotRow(
-                              segments:
-                                  dotState.selectedProgram.segments,
+                              segments: dotState.selectedProgram.segments,
                               currentCycle: dotState.currentCycle,
                               extendedExhaleCycles:
                                   dotState.extendedExhaleCycles,
@@ -284,7 +284,7 @@ class _BreathingSessionView extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                _phaseLabel(state.status, state.currentPhase),
+                _phaseLabel(context, state.status, state.currentPhase),
                 style: typography.phaseLabel,
               ),
               SizedBox(height: spacing.s),
@@ -320,18 +320,23 @@ class _BreathingSessionView extends StatelessWidget {
     );
   }
 
-  String _phaseLabel(SessionStatus status, PhaseType phase) {
-    if (status == SessionStatus.completed) return 'COMPLETE';
+  String _phaseLabel(
+    BuildContext context,
+    SessionStatus status,
+    PhaseType phase,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
+    if (status == SessionStatus.completed) return l10n.sessionComplete;
     if (status == SessionStatus.idle || status == SessionStatus.paused) {
-      return 'READY';
+      return l10n.sessionReady;
     }
     return switch (phase) {
-      PhaseType.inhale => 'INHALE',
-      PhaseType.extendedInhale => 'DEEP INHALE',
-      PhaseType.holdIn => 'HOLD',
-      PhaseType.exhale => 'EXHALE',
-      PhaseType.extendedExhale => 'DEEP EXHALE',
-      PhaseType.holdOut => 'HOLD',
+      PhaseType.inhale => l10n.phaseInhale,
+      PhaseType.extendedInhale => l10n.phaseDeepInhale,
+      PhaseType.holdIn => l10n.phaseHold,
+      PhaseType.exhale => l10n.phaseExhale,
+      PhaseType.extendedExhale => l10n.phaseDeepExhale,
+      PhaseType.holdOut => l10n.phaseHold,
     };
   }
 }

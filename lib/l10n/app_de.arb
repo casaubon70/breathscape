@@ -1,0 +1,22 @@
+{
+  "@@locale": "de",
+
+  "appTitle": "Breathscape",
+
+  "phaseInhale": "EINATMEN",
+  "phaseDeepInhale": "TIEF EINATMEN",
+  "phaseHold": "HALTEN",
+  "phaseExhale": "AUSATMEN",
+  "phaseDeepExhale": "TIEF AUSATMEN",
+
+  "sessionReady": "BEREIT",
+  "sessionComplete": "FERTIG",
+
+  "patternPickerTitle": "ATEMMUSTER",
+  "settingsTitle": "EINSTELLUNGEN",
+  "cycleCounterLabel": "ZYKLEN",
+  "sessionTimerLabel": "ZEIT",
+
+  "voiceCuesOn": "Sprachansagen an",
+  "voiceCuesOff": "Sprachansagen aus"
+}

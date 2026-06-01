@@ -1,0 +1,73 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "Breathscape",
+  "@appTitle": {
+    "description": "App name"
+  },
+
+  "phaseInhale": "INHALE",
+  "@phaseInhale": {
+    "description": "Label for the inhale breathing phase"
+  },
+
+  "phaseDeepInhale": "DEEP INHALE",
+  "@phaseDeepInhale": {
+    "description": "Label for the extended inhale breathing phase"
+  },
+
+  "phaseHold": "HOLD",
+  "@phaseHold": {
+    "description": "Label for hold phases (used for both holdIn and holdOut)"
+  },
+
+  "phaseExhale": "EXHALE",
+  "@phaseExhale": {
+    "description": "Label for the exhale breathing phase"
+  },
+
+  "phaseDeepExhale": "DEEP EXHALE",
+  "@phaseDeepExhale": {
+    "description": "Label for the extended exhale breathing phase"
+  },
+
+  "sessionReady": "READY",
+  "@sessionReady": {
+    "description": "Status label when no session is running"
+  },
+
+  "sessionComplete": "COMPLETE",
+  "@sessionComplete": {
+    "description": "Status label when a session has finished"
+  },
+
+  "patternPickerTitle": "BREATHING PATTERN",
+  "@patternPickerTitle": {
+    "description": "Title of the pattern picker page"
+  },
+
+  "settingsTitle": "SETTINGS",
+  "@settingsTitle": {
+    "description": "Title of the settings page"
+  },
+
+  "cycleCounterLabel": "CYCLES",
+  "@cycleCounterLabel": {
+    "description": "Label below the cycle counter"
+  },
+
+  "sessionTimerLabel": "TIME",
+  "@sessionTimerLabel": {
+    "description": "Label below the session countdown timer"
+  },
+
+  "voiceCuesOn": "Voice cues on",
+  "@voiceCuesOn": {
+    "description": "Tooltip when voice cues are active"
+  },
+
+  "voiceCuesOff": "Voice cues off",
+  "@voiceCuesOff": {
+    "description": "Tooltip when voice cues are muted"
+  }
+}

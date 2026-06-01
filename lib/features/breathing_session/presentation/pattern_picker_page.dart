@@ -1,5 +1,6 @@
 import 'package:breathscape/core/theme/app_theme.dart';
 import 'package:breathscape/features/breathing_session/domain/session_program.dart';
+import 'package:breathscape/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 class PatternPickerPage extends StatelessWidget {
@@ -29,7 +30,7 @@ class PatternPickerPage extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'BREATHING PATTERN',
+          AppLocalizations.of(context)!.patternPickerTitle,
           style: TextStyle(
             color: colors.textHint,
             fontSize: 12,

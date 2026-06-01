@@ -1,4 +1,5 @@
 import 'package:breathscape/core/theme/app_theme.dart';
+import 'package:breathscape/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
 class CycleCounter extends StatelessWidget {
@@ -19,7 +20,10 @@ class CycleCounter extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('CYCLES', style: labelStyle),
+        Text(
+          AppLocalizations.of(context)!.cycleCounterLabel,
+          style: labelStyle,
+        ),
         Text(
           '$current/$total',
           style: TextStyle(

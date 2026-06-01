@@ -31,11 +31,7 @@ void main() {
         _wrap(
           const CycleDotRow(
             segments: [
-              SessionSegment(
-                label: 'Warm Up',
-                cycleCount: 3,
-                cycleSpec: [],
-              ),
+              SessionSegment(label: 'Warm Up', cycleCount: 3, cycleSpec: []),
             ],
             currentCycle: 1,
           ),
@@ -47,18 +43,11 @@ void main() {
 
     testWidgets('renders a divider between two segments', (tester) async {
       await tester.pumpWidget(
-        _wrap(
-          CycleDotRow(
-            segments: [_seg(2), _seg(3)],
-            currentCycle: 1,
-          ),
-        ),
+        _wrap(CycleDotRow(segments: [_seg(2), _seg(3)], currentCycle: 1)),
       );
       // The divider is the only non-transparent ColoredBox in the tree.
       expect(
-        find.byWidgetPredicate(
-          (w) => w is ColoredBox && w.color.a > 0,
-        ),
+        find.byWidgetPredicate((w) => w is ColoredBox && w.color.a > 0),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);

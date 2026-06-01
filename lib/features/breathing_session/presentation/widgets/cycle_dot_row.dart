@@ -88,9 +88,7 @@ class CycleDotRow extends StatelessWidget {
             child: SizedBox(
               width: 1,
               height: totalHeight,
-              child: ColoredBox(
-                color: colors.textHint.withValues(alpha: 0.3),
-              ),
+              child: ColoredBox(color: colors.textHint.withValues(alpha: 0.3)),
             ),
           ),
         );

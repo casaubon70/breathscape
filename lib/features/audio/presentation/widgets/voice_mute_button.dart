@@ -2,6 +2,7 @@ import 'package:breathscape/core/theme/app_theme.dart';
 import 'package:breathscape/features/audio/bloc/audio_bloc.dart';
 import 'package:breathscape/features/audio/bloc/audio_event.dart';
 import 'package:breathscape/features/audio/bloc/audio_state.dart';
+import 'package:breathscape/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -29,7 +30,9 @@ class VoiceMuteButton extends StatelessWidget {
             size: _iconSize,
             color: state.isMuted ? colors.textHint : colors.signal,
           ),
-          tooltip: state.isMuted ? 'Voice cues off' : 'Voice cues on',
+          tooltip: state.isMuted
+              ? AppLocalizations.of(context)!.voiceCuesOff
+              : AppLocalizations.of(context)!.voiceCuesOn,
         );
       },
     );
