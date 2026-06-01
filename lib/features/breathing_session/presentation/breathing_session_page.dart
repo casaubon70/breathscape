@@ -71,8 +71,7 @@ class _BreathingSessionView extends StatelessWidget {
 
     return BlocListener<BreathingBloc, BreathingState>(
       listenWhen: (prev, curr) =>
-          prev.currentPhase != curr.currentPhase ||
-          prev.status != curr.status,
+          prev.currentPhase != curr.currentPhase || prev.status != curr.status,
       listener: (context, state) {
         final audioBloc = context.read<AudioBloc>();
         if (state.status == SessionStatus.playing) {
@@ -120,10 +119,12 @@ class _BreathingSessionView extends StatelessWidget {
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final dotsAreaHeight = CycleDotRow.rowHeight + spacing.m;
+                    final dotsAreaHeight = CycleDotRow.totalHeight + spacing.m;
                     final animHeight =
-                        ((constraints.maxHeight - dotsAreaHeight) * 0.40)
-                            .clamp(130.0, 300.0);
+                        ((constraints.maxHeight - dotsAreaHeight) * 0.40).clamp(
+                          130.0,
+                          300.0,
+                        );
                     return Column(
                       children: [
                         Expanded(
@@ -138,7 +139,7 @@ class _BreathingSessionView extends StatelessWidget {
                         BlocBuilder<BreathingBloc, BreathingState>(
                           buildWhen: (prev, curr) =>
                               prev.currentCycle != curr.currentCycle ||
-                              prev.totalCycles != curr.totalCycles ||
+                              prev.selectedProgram != curr.selectedProgram ||
                               prev.extendedExhaleCycles !=
                                   curr.extendedExhaleCycles ||
                               prev.extendedInhaleCycles !=
@@ -146,7 +147,8 @@ class _BreathingSessionView extends StatelessWidget {
                           builder: (context, dotState) => Padding(
                             padding: EdgeInsets.only(bottom: spacing.m),
                             child: CycleDotRow(
-                              totalCycles: dotState.totalCycles,
+                              segments:
+                                  dotState.selectedProgram.segments,
                               currentCycle: dotState.currentCycle,
                               extendedExhaleCycles:
                                   dotState.extendedExhaleCycles,
@@ -173,15 +175,15 @@ class _BreathingSessionView extends StatelessWidget {
                       buildWhen: (prev, curr) => prev.status != curr.status,
                       builder: (context, state) => PlaybackControls(
                         status: state.status,
-                        onPlay: () => context
-                            .read<BreathingBloc>()
-                            .add(const PlayPressed()),
-                        onPause: () => context
-                            .read<BreathingBloc>()
-                            .add(const PausePressed()),
-                        onReset: () => context
-                            .read<BreathingBloc>()
-                            .add(const ResetPressed()),
+                        onPlay: () => context.read<BreathingBloc>().add(
+                          const PlayPressed(),
+                        ),
+                        onPause: () => context.read<BreathingBloc>().add(
+                          const PausePressed(),
+                        ),
+                        onReset: () => context.read<BreathingBloc>().add(
+                          const ResetPressed(),
+                        ),
                       ),
                     ),
                     Align(
