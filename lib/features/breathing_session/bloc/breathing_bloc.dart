@@ -9,6 +9,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
   factory BreathingBloc({required SessionProgram program}) {
     final timeline = program.resolve();
+    if (timeline.cycles.isEmpty) {
+      throw ArgumentError('Program "${program.name}" has no cycles.');
+    }
+    if (timeline.cycles.first.phases.isEmpty) {
+      throw ArgumentError(
+        'Program "${program.name}": first cycle has no phases.',
+      );
+    }
     final firstPhase = timeline.cycles.first.phases.first;
     return BreathingBloc._(
       program: program,
@@ -21,10 +29,14 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
         totalCycles: timeline.cycles.length,
         showTopCircle: _hasPhaseType(timeline, PhaseType.holdIn),
         showBottomCircle: _hasPhaseType(timeline, PhaseType.holdOut),
-        extendedExhaleCycles:
-            _extendedCycles(timeline, PhaseType.extendedExhale),
-        extendedInhaleCycles:
-            _extendedCycles(timeline, PhaseType.extendedInhale),
+        extendedExhaleCycles: _extendedCycles(
+          timeline,
+          PhaseType.extendedExhale,
+        ),
+        extendedInhaleCycles: _extendedCycles(
+          timeline,
+          PhaseType.extendedInhale,
+        ),
       ),
     );
   }
@@ -147,10 +159,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     );
   }
 
-  void _onProgramSelected(
-    ProgramSelected event,
-    Emitter<BreathingState> emit,
-  ) {
+  void _onProgramSelected(ProgramSelected event, Emitter<BreathingState> emit) {
     _ticker?.stop();
     _program = event.program;
     _timeline = _program.resolve();
@@ -170,10 +179,14 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
         totalCycles: _timeline.cycles.length,
         showTopCircle: _hasPhaseType(_timeline, PhaseType.holdIn),
         showBottomCircle: _hasPhaseType(_timeline, PhaseType.holdOut),
-        extendedExhaleCycles:
-            _extendedCycles(_timeline, PhaseType.extendedExhale),
-        extendedInhaleCycles:
-            _extendedCycles(_timeline, PhaseType.extendedInhale),
+        extendedExhaleCycles: _extendedCycles(
+          _timeline,
+          PhaseType.extendedExhale,
+        ),
+        extendedInhaleCycles: _extendedCycles(
+          _timeline,
+          PhaseType.extendedInhale,
+        ),
       ),
     );
   }
@@ -183,6 +196,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     if (state.status != SessionStatus.playing) return;
 
     _updateStartFromDeep(state.currentPhase);
+    _phaseAccumulated = Duration.zero;
 
     final currentCyclePhases = _timeline.cycles[_absCycle].phases;
     final nextPhaseIndex = _phaseIndex + 1;
@@ -239,7 +253,8 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     }
   }
 
-  // Ticker event — processes delta and transitions phases directly.
+  // Ticker event — advances through as many phases as the delta spans so that
+  // large deltas (e.g. after a background wakeup) never stall on short phases.
   void _onTickUpdated(
     BreathingTickUpdated event,
     Emitter<BreathingState> emit,
@@ -247,52 +262,22 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     if (state.status != SessionStatus.playing) return;
 
     _phaseAccumulated += event.delta;
-    final currentPhase = _timeline.cycles[_absCycle].phases[_phaseIndex];
 
-    if (_phaseAccumulated >= currentPhase.duration) {
-      _updateStartFromDeep(state.currentPhase);
+    // Carry overshoot across as many consecutive phase boundaries as needed.
+    while (true) {
+      final phase = _timeline.cycles[_absCycle].phases[_phaseIndex];
+      if (_phaseAccumulated < phase.duration) break;
+
+      _updateStartFromDeep(phase.type);
       // Carry overshoot so sub-phase timing drift doesn't compound.
-      _phaseAccumulated -= currentPhase.duration;
+      _phaseAccumulated -= phase.duration;
 
-      final currentCyclePhases = _timeline.cycles[_absCycle].phases;
       final nextPhaseIndex = _phaseIndex + 1;
-
-      if (nextPhaseIndex < currentCyclePhases.length) {
+      if (nextPhaseIndex < _timeline.cycles[_absCycle].phases.length) {
         _phaseIndex = nextPhaseIndex;
-        final next = currentCyclePhases[_phaseIndex];
-        emit(
-          state.copyWith(
-            currentPhase: next.type,
-            phaseSecondsRemaining: _secondsRemaining(),
-            sessionSecondsRemaining: _sessionSecondsRemaining(),
-            fillLevel: _fillLevelForPhase(next.type, 0),
-            deepZoneFill: _deepZoneFillForPhase(next.type, 0),
-            topZoneFill: _topZoneFillForPhase(next.type, 0),
-            circleScale: _circleScaleForPhase(next.type, 0),
-            circleOpacity: _circleOpacityForPhase(next.type, 0),
-            circleBottomScale: _circleBottomScaleForPhase(next.type, 0),
-            circleBottomOpacity: _circleBottomOpacityForPhase(next.type, 0),
-          ),
-        );
       } else if (_absCycle + 1 < _timeline.cycles.length) {
         _absCycle++;
         _phaseIndex = 0;
-        final next = _timeline.cycles[_absCycle].phases[0];
-        emit(
-          state.copyWith(
-            currentPhase: next.type,
-            currentCycle: _absCycle + 1,
-            phaseSecondsRemaining: _secondsRemaining(),
-            sessionSecondsRemaining: _sessionSecondsRemaining(),
-            fillLevel: _fillLevelForPhase(next.type, 0),
-            deepZoneFill: _deepZoneFillForPhase(next.type, 0),
-            topZoneFill: _topZoneFillForPhase(next.type, 0),
-            circleScale: _circleScaleForPhase(next.type, 0),
-            circleOpacity: _circleOpacityForPhase(next.type, 0),
-            circleBottomScale: _circleBottomScaleForPhase(next.type, 0),
-            circleBottomOpacity: _circleBottomOpacityForPhase(next.type, 0),
-          ),
-        );
       } else {
         _ticker?.stop();
         _startFromDeep = false;
@@ -306,27 +291,37 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
             sessionSecondsRemaining: 0,
           ),
         );
+        return;
       }
-    } else {
-      final progress =
-          _phaseAccumulated.inMicroseconds /
-          currentPhase.duration.inMicroseconds;
-      emit(
-        state.copyWith(
-          phaseSecondsRemaining: _secondsRemaining(),
-          sessionSecondsRemaining: _sessionSecondsRemaining(),
-          fillLevel: _fillLevelForPhase(state.currentPhase, progress),
-          deepZoneFill: _deepZoneFillForPhase(state.currentPhase, progress),
-          topZoneFill: _topZoneFillForPhase(state.currentPhase, progress),
-          circleScale: _circleScaleForPhase(state.currentPhase, progress),
-          circleOpacity: _circleOpacityForPhase(state.currentPhase, progress),
-          circleBottomScale:
-              _circleBottomScaleForPhase(state.currentPhase, progress),
-          circleBottomOpacity:
-              _circleBottomOpacityForPhase(state.currentPhase, progress),
-        ),
-      );
     }
+
+    final currentPhase = _timeline.cycles[_absCycle].phases[_phaseIndex];
+    // Guard against zero-duration phases to avoid NaN from division by zero.
+    final progress = currentPhase.duration.inMicroseconds > 0
+        ? _phaseAccumulated.inMicroseconds /
+              currentPhase.duration.inMicroseconds
+        : 0.0;
+    emit(
+      state.copyWith(
+        currentPhase: currentPhase.type,
+        currentCycle: _absCycle + 1,
+        phaseSecondsRemaining: _secondsRemaining(),
+        sessionSecondsRemaining: _sessionSecondsRemaining(),
+        fillLevel: _fillLevelForPhase(currentPhase.type, progress),
+        deepZoneFill: _deepZoneFillForPhase(currentPhase.type, progress),
+        topZoneFill: _topZoneFillForPhase(currentPhase.type, progress),
+        circleScale: _circleScaleForPhase(currentPhase.type, progress),
+        circleOpacity: _circleOpacityForPhase(currentPhase.type, progress),
+        circleBottomScale: _circleBottomScaleForPhase(
+          currentPhase.type,
+          progress,
+        ),
+        circleBottomOpacity: _circleBottomOpacityForPhase(
+          currentPhase.type,
+          progress,
+        ),
+      ),
+    );
   }
 
   void _onTick(Duration elapsed) {
@@ -355,7 +350,7 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     final remaining = duration - _phaseAccumulated;
     return (remaining.inMilliseconds / 1000).ceil().clamp(
       0,
-      duration.inSeconds,
+      (duration.inMilliseconds / 1000).ceil(),
     );
   }
 
@@ -363,11 +358,11 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     var total = _secondsRemaining();
     final currentCyclePhases = _timeline.cycles[_absCycle].phases;
     for (var i = _phaseIndex + 1; i < currentCyclePhases.length; i++) {
-      total += currentCyclePhases[i].duration.inSeconds;
+      total += (currentCyclePhases[i].duration.inMilliseconds / 1000).ceil();
     }
     for (var c = _absCycle + 1; c < _timeline.cycles.length; c++) {
       for (final phase in _timeline.cycles[c].phases) {
-        total += phase.duration.inSeconds;
+        total += (phase.duration.inMilliseconds / 1000).ceil();
       }
     }
     return total;

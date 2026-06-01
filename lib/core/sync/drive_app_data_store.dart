@@ -31,6 +31,10 @@ class DriveAppDataStore implements SyncedKeyValueStore {
   final AccessTokenProvider _accessToken;
   final http.Client _client;
 
+  // Serialises writes per key so two concurrent write() calls never both call
+  // _create (which would produce duplicate appDataFolder files for one key).
+  final _ongoing = <String, Future<void>>{};
+
   @override
   Future<String?> read(String key) async {
     final token = await _accessToken();
@@ -41,11 +45,30 @@ class DriveAppDataStore implements SyncedKeyValueStore {
       Uri.parse('$_filesUrl/$id?alt=media'),
       headers: {'Authorization': 'Bearer $token'},
     );
-    return response.statusCode == 200 ? response.body : null;
+    // Accept any 2xx (Drive may return 206 for large files).
+    return response.statusCode >= 200 && response.statusCode < 300
+        ? response.body
+        : null;
   }
 
   @override
-  Future<void> write(String key, String value) async {
+  Future<void> write(String key, String value) {
+    // Chain writes for the same key to prevent the TOCTOU race where two
+    // concurrent callers both see no existing file and both call _create.
+    final prev = _ongoing[key];
+    final next = (prev ?? Future<void>.value()).then<void>(
+      (_) => _writeNow(key, value),
+    );
+    _ongoing[key] = next.whenComplete(() {
+      if (_ongoing[key] == next) _ongoing.remove(key);
+    });
+    return _ongoing[key]!;
+  }
+
+  @override
+  Stream<String> watch(String key) => const Stream.empty();
+
+  Future<void> _writeNow(String key, String value) async {
     final token = await _accessToken();
     if (token == null) return;
     final id = await _fileId(key, token);
@@ -56,15 +79,14 @@ class DriveAppDataStore implements SyncedKeyValueStore {
     }
   }
 
-  @override
-  Stream<String> watch(String key) => const Stream.empty();
-
   /// Returns the Drive file id for [key] in the appDataFolder, or null.
   Future<String?> _fileId(String key, String token) async {
+    // Escape single quotes in the filename for the Drive query string.
+    final escapedName = _fileName(key).replaceAll("'", "\\'");
     final uri = Uri.parse(_filesUrl).replace(
       queryParameters: {
         'spaces': 'appDataFolder',
-        'q': "name = '${_fileName(key)}'",
+        'q': "name = '$escapedName'",
         'fields': 'files(id)',
       },
     );
@@ -96,7 +118,10 @@ class DriveAppDataStore implements SyncedKeyValueStore {
             http.MultipartFile.fromString('metadata', jsonEncode(metadata)),
           )
           ..files.add(http.MultipartFile.fromString('file', value));
-    await _client.send(request);
+    final streamed = await _client.send(request);
+    // Ignore non-2xx responses: sync is best-effort; local store is the source
+    // of truth and the remote will re-sync on the next app launch.
+    streamed.stream.drain<void>();
   }
 
   Future<void> _update(String id, String value, String token) async {
@@ -108,6 +133,7 @@ class DriveAppDataStore implements SyncedKeyValueStore {
       },
       body: value,
     );
+    // Non-2xx is silently ignored — sync is best-effort.
   }
 
   String _fileName(String key) => '$key.json';

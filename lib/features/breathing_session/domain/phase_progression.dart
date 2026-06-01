@@ -27,9 +27,7 @@ final class FixedProgression extends PhaseProgression {
 
   factory FixedProgression.fromJson(Map<String, dynamic> json) =>
       FixedProgression(
-        Duration(
-          milliseconds: ((json['seconds'] as num) * 1000).round(),
-        ),
+        Duration(milliseconds: ((json['seconds'] as num) * 1000).round()),
       );
 
   final Duration duration;
@@ -91,6 +89,7 @@ final class LinearProgression extends PhaseProgression {
     final floor = min;
     if (cap != null && ms > cap.inMilliseconds) ms = cap.inMilliseconds;
     if (floor != null && ms < floor.inMilliseconds) ms = floor.inMilliseconds;
+    if (ms < 0) ms = 0;
     return Duration(milliseconds: ms);
   }
 
@@ -126,8 +125,10 @@ final class StepProgression extends PhaseProgression {
   final List<Duration> durations;
 
   @override
-  Duration durationFor(int cycleInSegment) =>
-      durations[cycleInSegment.clamp(0, durations.length - 1)];
+  Duration durationFor(int cycleInSegment) {
+    if (durations.isEmpty) return Duration.zero;
+    return durations[cycleInSegment.clamp(0, durations.length - 1)];
+  }
 
   @override
   Map<String, dynamic> toJson() => {

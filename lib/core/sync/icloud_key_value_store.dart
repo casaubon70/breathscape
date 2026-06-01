@@ -17,6 +17,12 @@ class ICloudKeyValueStore implements SyncedKeyValueStore {
     'breathscape/icloud_kv_changes',
   );
 
+  // Single shared broadcast stream so multiple watch() calls register only one
+  // native EventChannel listener. Calling receiveBroadcastStream() more than
+  // once would create duplicate native handlers that cancel each other on
+  // unsubscribe.
+  static final Stream<Object?> _rawChanges = _changes.receiveBroadcastStream();
+
   @override
   Future<String?> read(String key) async {
     return _methods.invokeMethod<String>('get', {'key': key});
@@ -29,10 +35,12 @@ class ICloudKeyValueStore implements SyncedKeyValueStore {
 
   @override
   Stream<String> watch(String key) {
-    return _changes
-        .receiveBroadcastStream()
+    return _rawChanges
         .where((event) => event == key)
-        .asyncMap((_) async => await read(key) ?? '')
-        .where((value) => value.isNotEmpty);
+        .asyncMap<String?>((_) async => read(key))
+        // Drop null (key missing / transient read failure) but pass through
+        // empty string, which is a legitimate stored value.
+        .where((v) => v != null)
+        .cast<String>();
   }
 }

@@ -22,11 +22,15 @@ final class ResolvedTimeline extends Equatable {
   /// One entry per absolute cycle, in playback order.
   final List<ResolvedCycle> cycles;
 
-  /// Total session length in whole seconds (truncated per phase).
+  /// Total session length in whole seconds (ceiling per phase).
   int get totalSeconds => cycles.fold(
     0,
     (total, cycle) =>
-        total + cycle.phases.fold(0, (s, p) => s + p.duration.inSeconds),
+        total +
+        cycle.phases.fold(
+          0,
+          (s, p) => s + (p.duration.inMilliseconds / 1000).ceil(),
+        ),
   );
 
   @override
