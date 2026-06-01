@@ -1,8 +1,6 @@
 import 'dart:convert';
 
-import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
-import 'package:breathscape/features/breathing_session/domain/pattern_migration.dart';
 import 'package:breathscape/features/breathing_session/domain/phase_progression.dart';
 import 'package:breathscape/features/breathing_session/domain/session_program.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -148,8 +146,10 @@ void main() {
           ],
         ],
       );
-      final timeline =
-          const SessionProgram(name: 'L', segments: [seg]).resolve();
+      final timeline = const SessionProgram(
+        name: 'L',
+        segments: [seg],
+      ).resolve();
       expect(
         timeline.cycles[0].phases[0].duration,
         const Duration(milliseconds: 4000),
@@ -202,134 +202,6 @@ void main() {
       expect(timeline.totalSeconds, 64);
     });
   });
-
-  // ── migratePatternToProgram ────────────────────────────────────────────────
-
-  group('migratePatternToProgram', () {
-    const plainPattern = BreathingPattern(
-      name: 'Box Breathing',
-      phases: [
-        BreathingPhase(type: PhaseType.inhale, duration: Duration(seconds: 4)),
-        BreathingPhase(type: PhaseType.holdIn, duration: Duration(seconds: 4)),
-        BreathingPhase(type: PhaseType.exhale, duration: Duration(seconds: 4)),
-        BreathingPhase(type: PhaseType.holdOut, duration: Duration(seconds: 4)),
-      ],
-    );
-
-    test('pattern without intervals: single segment, single cycleSpec', () {
-      final prog = migratePatternToProgram(plainPattern);
-      expect(prog.segments.length, 1);
-      expect(prog.segments[0].cycleSpecs.length, 1);
-      expect(prog.segments[0].cycleCount, plainPattern.defaultCycles);
-      for (final spec in prog.segments[0].cycleSpecs[0]) {
-        expect(spec.progression, isA<FixedProgression>());
-      }
-    });
-
-    test('pattern without intervals: totalSeconds matches manual calculation',
-        () {
-      // 4 phases × 4 s × 10 cycles = 160 s
-      final timeline = migratePatternToProgram(plainPattern).resolve();
-      expect(timeline.totalSeconds, 160);
-    });
-
-    test('extendedExhaleInterval=3: cycleSpecs has length 3', () {
-      const pattern = BreathingPattern(
-        name: 'Extended',
-        phases: [
-          BreathingPhase(
-            type: PhaseType.inhale,
-            duration: Duration(seconds: 4),
-          ),
-          BreathingPhase(
-            type: PhaseType.exhale,
-            duration: Duration(seconds: 4),
-          ),
-        ],
-        extendedExhaleInterval: 3,
-      );
-      final prog = migratePatternToProgram(pattern);
-      expect(prog.segments[0].cycleSpecs.length, 3);
-      // Index 2 (i=2, (2+1)%3==0) carries extendedExhale.
-      final extSpec = prog.segments[0].cycleSpecs[2];
-      final exhaleSpec = extSpec.firstWhere(
-        (s) => s.type == PhaseType.extendedExhale,
-      );
-      expect(
-        (exhaleSpec.progression as FixedProgression).duration,
-        const Duration(seconds: 6),
-      );
-    });
-
-    test(
-        'extendedExhaleInterval=3: golden — resolve().totalSeconds matches '
-        'old _calcTotalSessionSeconds', () {
-      // Old formula: 10 cycles, phases 4+4=8s each; cycles 3,6,9 get +2s on
-      // exhale → 10×8 + 3×2 = 80 + 6 = 86 s
-      const pattern = BreathingPattern(
-        name: 'Golden',
-        phases: [
-          BreathingPhase(
-            type: PhaseType.inhale,
-            duration: Duration(seconds: 4),
-          ),
-          BreathingPhase(
-            type: PhaseType.exhale,
-            duration: Duration(seconds: 4),
-          ),
-        ],
-        extendedExhaleInterval: 3,
-      );
-      final expected = _calcTotalSeconds(pattern);
-      final actual = migratePatternToProgram(pattern).resolve().totalSeconds;
-      expect(actual, expected);
-    });
-
-    test(
-        'extendedInhaleInterval=2: golden — resolve().totalSeconds matches '
-        'old _calcTotalSessionSeconds', () {
-      const pattern = BreathingPattern(
-        name: 'Golden Inhale',
-        phases: [
-          BreathingPhase(
-            type: PhaseType.inhale,
-            duration: Duration(seconds: 4),
-          ),
-          BreathingPhase(
-            type: PhaseType.exhale,
-            duration: Duration(seconds: 4),
-          ),
-        ],
-        extendedInhaleInterval: 2,
-      );
-      expect(
-        migratePatternToProgram(pattern).resolve().totalSeconds,
-        _calcTotalSeconds(pattern),
-      );
-    });
-  });
-}
-
-// Replicates the old BreathingBloc._calcTotalSessionSeconds for golden tests.
-int _calcTotalSeconds(BreathingPattern pattern) {
-  final exhaleInterval = pattern.extendedExhaleInterval;
-  final inhaleInterval = pattern.extendedInhaleInterval;
-  var total = 0;
-  for (var c = 1; c <= pattern.defaultCycles; c++) {
-    for (final phase in pattern.phases) {
-      final isExtExhale = phase.type == PhaseType.exhale &&
-          exhaleInterval != null &&
-          exhaleInterval > 0 &&
-          c % exhaleInterval == 0;
-      final isExtInhale = phase.type == PhaseType.inhale &&
-          inhaleInterval != null &&
-          inhaleInterval > 0 &&
-          c % inhaleInterval == 0;
-      total +=
-          phase.duration.inSeconds + (isExtExhale || isExtInhale ? 2 : 0);
-    }
-  }
-  return total;
 }
 
 // Helper to avoid repeating the SessionProgram(...).resolve() pattern.

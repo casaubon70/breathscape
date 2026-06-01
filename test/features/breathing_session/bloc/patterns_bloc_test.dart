@@ -2,20 +2,31 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:breathscape/features/breathing_session/bloc/patterns_bloc.dart';
 import 'package:breathscape/features/breathing_session/bloc/patterns_event.dart';
 import 'package:breathscape/features/breathing_session/bloc/patterns_state.dart';
-import 'package:breathscape/features/breathing_session/domain/breathing_pattern.dart';
 import 'package:breathscape/features/breathing_session/domain/breathing_phase.dart';
-import 'package:breathscape/features/breathing_session/domain/pattern_migration.dart';
+import 'package:breathscape/features/breathing_session/domain/phase_progression.dart';
 import 'package:breathscape/features/breathing_session/domain/session_program.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-final _boxProgram = migratePatternToProgram(
-  const BreathingPattern(
-    name: 'Box Breathing',
-    phases: [
-      BreathingPhase(type: PhaseType.inhale, duration: Duration(seconds: 4)),
-      BreathingPhase(type: PhaseType.exhale, duration: Duration(seconds: 4)),
-    ],
-  ),
+const _boxProgram = SessionProgram(
+  name: 'Box Breathing',
+  segments: [
+    SessionSegment(
+      label: 'Box Breathing',
+      cycleCount: 10,
+      cycleSpecs: [
+        [
+          PhaseSpec(
+            type: PhaseType.inhale,
+            progression: FixedProgression(Duration(seconds: 4)),
+          ),
+          PhaseSpec(
+            type: PhaseType.exhale,
+            progression: FixedProgression(Duration(seconds: 4)),
+          ),
+        ],
+      ],
+    ),
+  ],
 );
 
 Future<List<SessionProgram>> _baseLoader() async => [_boxProgram];
@@ -28,7 +39,10 @@ void main() {
       act: (bloc) => bloc.add(const PatternsLoaded()),
       expect: () => [
         const PatternsState(status: PatternsStatus.loading),
-        PatternsState(status: PatternsStatus.ready, programs: [_boxProgram]),
+        const PatternsState(
+          status: PatternsStatus.ready,
+          programs: [_boxProgram],
+        ),
       ],
     );
 

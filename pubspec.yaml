@@ -60,7 +60,6 @@ flutter:
 
   assets:
     - assets/breathing_programs.json
-    - assets/breathing_patterns.yaml
     - assets/voices/
     - assets/noises/
 
