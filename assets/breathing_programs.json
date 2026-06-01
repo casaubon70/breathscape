@@ -4,8 +4,28 @@
       "name": "Box Breathing",
       "segments": [
         {
+          "label": "Warm Up",
+          "cycleCount": 3,
+          "cycleSpec": [
+            {"type": "inhale",   "progression": {"kind": "fixed", "seconds": 4}},
+            {"type": "hold_in",  "progression": {"kind": "fixed", "seconds": 4}},
+            {"type": "exhale",   "progression": {"kind": "fixed", "seconds": 4}},
+            {"type": "hold_out", "progression": {"kind": "fixed", "seconds": 4}}
+          ]
+        },
+        {
           "label": "Box Breathing",
-          "cycleCount": 10,
+          "cycleCount": 4,
+          "cycleSpec": [
+            {"type": "inhale",   "progression": {"kind": "fixed", "seconds": 4}},
+            {"type": "hold_in",  "progression": {"kind": "fixed", "seconds": 4}},
+            {"type": "exhale",   "progression": {"kind": "fixed", "seconds": 4}},
+            {"type": "hold_out", "progression": {"kind": "fixed", "seconds": 4}}
+          ]
+        },
+        {
+          "label": "Cool Down",
+          "cycleCount": 3,
           "cycleSpec": [
             {"type": "inhale",   "progression": {"kind": "fixed", "seconds": 4}},
             {"type": "hold_in",  "progression": {"kind": "fixed", "seconds": 4}},
@@ -19,12 +39,30 @@
       "name": "4-7-8 Breathing",
       "segments": [
         {
-          "label": "4-7-8",
-          "cycleCount": 10,
+          "label": "Warm Up",
+          "cycleCount": 3,
           "cycleSpec": [
-            {"type": "inhale",   "progression": {"kind": "fixed", "seconds": 4}},
-            {"type": "hold_in",  "progression": {"kind": "fixed", "seconds": 7}},
-            {"type": "exhale",   "progression": {"kind": "fixed", "seconds": 8}}
+            {"type": "inhale",  "progression": {"kind": "fixed", "seconds": 4}},
+            {"type": "hold_in", "progression": {"kind": "fixed", "seconds": 7}},
+            {"type": "exhale",  "progression": {"kind": "fixed", "seconds": 8}}
+          ]
+        },
+        {
+          "label": "4-7-8",
+          "cycleCount": 4,
+          "cycleSpec": [
+            {"type": "inhale",  "progression": {"kind": "fixed", "seconds": 4}},
+            {"type": "hold_in", "progression": {"kind": "fixed", "seconds": 7}},
+            {"type": "exhale",  "progression": {"kind": "fixed", "seconds": 8}}
+          ]
+        },
+        {
+          "label": "Cool Down",
+          "cycleCount": 3,
+          "cycleSpec": [
+            {"type": "inhale",  "progression": {"kind": "fixed", "seconds": 4}},
+            {"type": "hold_in", "progression": {"kind": "fixed", "seconds": 7}},
+            {"type": "exhale",  "progression": {"kind": "fixed", "seconds": 8}}
           ]
         }
       ]
@@ -33,8 +71,24 @@
       "name": "Coherent Breathing",
       "segments": [
         {
+          "label": "Warm Up",
+          "cycleCount": 3,
+          "cycleSpec": [
+            {"type": "inhale", "progression": {"kind": "fixed", "seconds": 5}},
+            {"type": "exhale", "progression": {"kind": "fixed", "seconds": 5}}
+          ]
+        },
+        {
           "label": "Coherent",
-          "cycleCount": 10,
+          "cycleCount": 4,
+          "cycleSpec": [
+            {"type": "inhale", "progression": {"kind": "fixed", "seconds": 5}},
+            {"type": "exhale", "progression": {"kind": "fixed", "seconds": 5}}
+          ]
+        },
+        {
+          "label": "Cool Down",
+          "cycleCount": 3,
           "cycleSpec": [
             {"type": "inhale", "progression": {"kind": "fixed", "seconds": 5}},
             {"type": "exhale", "progression": {"kind": "fixed", "seconds": 5}}
@@ -46,7 +100,7 @@
       "name": "Progressive Hold",
       "segments": [
         {
-          "label": "Warm-up",
+          "label": "Warm Up",
           "cycleCount": 3,
           "cycleSpec": [
             {"type": "inhale",   "progression": {"kind": "fixed",  "seconds": 4}},
@@ -66,7 +120,7 @@
           ]
         },
         {
-          "label": "Cool-down",
+          "label": "Cool Down",
           "cycleCount": 3,
           "cycleSpec": [
             {"type": "inhale",   "progression": {"kind": "fixed",  "seconds": 4}},
