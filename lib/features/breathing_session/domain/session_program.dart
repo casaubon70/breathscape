@@ -27,52 +27,37 @@ final class PhaseSpec extends Equatable {
   List<Object?> get props => [type, progression];
 }
 
-/// A named group of cycles that share a phase structure.
-///
-/// [cycleSpecs] holds one or more cycle templates. If there is only one
-/// template it applies uniformly to all cycles. Multiple templates are applied
-/// via modulo wrapping, enabling alternating or periodic patterns.
+/// A named group of cycles that all share the same phase structure.
 final class SessionSegment extends Equatable {
   const SessionSegment({
     required this.label,
     required this.cycleCount,
-    required this.cycleSpecs,
+    required this.cycleSpec,
   });
 
   factory SessionSegment.fromJson(Map<String, dynamic> json) {
-    final rawCycleSpecs = json['cycleSpecs'] as List<dynamic>;
+    final rawCycleSpec = json['cycleSpec'] as List<dynamic>;
     return SessionSegment(
       label: json['label'] as String,
       cycleCount: json['cycleCount'] as int,
-      cycleSpecs: rawCycleSpecs.map((rawSpecs) {
-        final specs = rawSpecs as List<dynamic>;
-        return specs
-            .map((raw) => PhaseSpec.fromJson(raw as Map<String, dynamic>))
-            .toList();
-      }).toList(),
+      cycleSpec: rawCycleSpec
+          .map((raw) => PhaseSpec.fromJson(raw as Map<String, dynamic>))
+          .toList(),
     );
   }
 
   final String label;
   final int cycleCount;
-
-  /// Length 1 → uniform; length N → alternating via modulo.
-  final List<List<PhaseSpec>> cycleSpecs;
-
-  /// Returns the phase specs for [cycleInSegment] (0-based).
-  List<PhaseSpec> phasesForCycle(int cycleInSegment) =>
-      cycleSpecs[cycleInSegment % cycleSpecs.length];
+  final List<PhaseSpec> cycleSpec;
 
   Map<String, dynamic> toJson() => {
     'label': label,
     'cycleCount': cycleCount,
-    'cycleSpecs': cycleSpecs
-        .map((specs) => specs.map((s) => s.toJson()).toList())
-        .toList(),
+    'cycleSpec': cycleSpec.map((s) => s.toJson()).toList(),
   };
 
   @override
-  List<Object?> get props => [label, cycleCount, cycleSpecs];
+  List<Object?> get props => [label, cycleCount, cycleSpec];
 }
 
 /// Top-level session definition: an ordered list of segments that together
@@ -98,7 +83,7 @@ final class SessionProgram extends Equatable {
     final cycles = <ResolvedCycle>[];
     for (final segment in segments) {
       for (var c = 0; c < segment.cycleCount; c++) {
-        final phases = segment.phasesForCycle(c).map((spec) {
+        final phases = segment.cycleSpec.map((spec) {
           return BreathingPhase(
             type: spec.type,
             duration: spec.progression.durationFor(c),

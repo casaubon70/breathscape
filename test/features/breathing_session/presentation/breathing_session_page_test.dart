@@ -17,17 +17,15 @@ const _testPrograms = [
       SessionSegment(
         label: 'Test Pattern',
         cycleCount: 10,
-        cycleSpecs: [
-          [
-            PhaseSpec(
-              type: PhaseType.inhale,
-              progression: FixedProgression(Duration(seconds: 4)),
-            ),
-            PhaseSpec(
-              type: PhaseType.exhale,
-              progression: FixedProgression(Duration(seconds: 4)),
-            ),
-          ],
+        cycleSpec: [
+          PhaseSpec(
+            type: PhaseType.inhale,
+            progression: FixedProgression(Duration(seconds: 4)),
+          ),
+          PhaseSpec(
+            type: PhaseType.exhale,
+            progression: FixedProgression(Duration(seconds: 4)),
+          ),
         ],
       ),
     ],

@@ -18,25 +18,23 @@ void main() {
       SessionSegment(
         label: 'Box Breathing',
         cycleCount: 10,
-        cycleSpecs: [
-          [
-            PhaseSpec(
-              type: PhaseType.inhale,
-              progression: FixedProgression(Duration(seconds: 4)),
-            ),
-            PhaseSpec(
-              type: PhaseType.holdIn,
-              progression: FixedProgression(Duration(seconds: 4)),
-            ),
-            PhaseSpec(
-              type: PhaseType.exhale,
-              progression: FixedProgression(Duration(seconds: 4)),
-            ),
-            PhaseSpec(
-              type: PhaseType.holdOut,
-              progression: FixedProgression(Duration(seconds: 4)),
-            ),
-          ],
+        cycleSpec: [
+          PhaseSpec(
+            type: PhaseType.inhale,
+            progression: FixedProgression(Duration(seconds: 4)),
+          ),
+          PhaseSpec(
+            type: PhaseType.holdIn,
+            progression: FixedProgression(Duration(seconds: 4)),
+          ),
+          PhaseSpec(
+            type: PhaseType.exhale,
+            progression: FixedProgression(Duration(seconds: 4)),
+          ),
+          PhaseSpec(
+            type: PhaseType.holdOut,
+            progression: FixedProgression(Duration(seconds: 4)),
+          ),
         ],
       ),
     ],
@@ -179,17 +177,15 @@ void main() {
         SessionSegment(
           label: 'Single Cycle',
           cycleCount: 1,
-          cycleSpecs: [
-            [
-              PhaseSpec(
-                type: PhaseType.inhale,
-                progression: FixedProgression(Duration(seconds: 4)),
-              ),
-              PhaseSpec(
-                type: PhaseType.exhale,
-                progression: FixedProgression(Duration(seconds: 4)),
-              ),
-            ],
+          cycleSpec: [
+            PhaseSpec(
+              type: PhaseType.inhale,
+              progression: FixedProgression(Duration(seconds: 4)),
+            ),
+            PhaseSpec(
+              type: PhaseType.exhale,
+              progression: FixedProgression(Duration(seconds: 4)),
+            ),
           ],
         ),
       ],
@@ -260,17 +256,15 @@ void main() {
             SessionSegment(
               label: 'Two Cycles',
               cycleCount: 2,
-              cycleSpecs: [
-                [
-                  PhaseSpec(
-                    type: PhaseType.inhale,
-                    progression: FixedProgression(Duration(seconds: 4)),
-                  ),
-                  PhaseSpec(
-                    type: PhaseType.exhale,
-                    progression: FixedProgression(Duration(seconds: 4)),
-                  ),
-                ],
+              cycleSpec: [
+                PhaseSpec(
+                  type: PhaseType.inhale,
+                  progression: FixedProgression(Duration(seconds: 4)),
+                ),
+                PhaseSpec(
+                  type: PhaseType.exhale,
+                  progression: FixedProgression(Duration(seconds: 4)),
+                ),
               ],
             ),
           ],
@@ -305,44 +299,40 @@ void main() {
   });
 
   group('BreathingBloc – Extended Exhale', () {
+    const _inhale4 = PhaseSpec(
+      type: PhaseType.inhale,
+      progression: FixedProgression(Duration(seconds: 4)),
+    );
+    const _exhale4 = PhaseSpec(
+      type: PhaseType.exhale,
+      progression: FixedProgression(Duration(seconds: 4)),
+    );
+    const _extExhale6 = PhaseSpec(
+      type: PhaseType.extendedExhale,
+      progression: FixedProgression(Duration(seconds: 6)),
+    );
     const extPattern = SessionProgram(
       name: 'Extended Test',
       segments: [
         SessionSegment(
           label: 'Extended Test',
-          cycleCount: 6,
-          cycleSpecs: [
-            [
-              PhaseSpec(
-                type: PhaseType.inhale,
-                progression: FixedProgression(Duration(seconds: 4)),
-              ),
-              PhaseSpec(
-                type: PhaseType.exhale,
-                progression: FixedProgression(Duration(seconds: 4)),
-              ),
-            ],
-            [
-              PhaseSpec(
-                type: PhaseType.inhale,
-                progression: FixedProgression(Duration(seconds: 4)),
-              ),
-              PhaseSpec(
-                type: PhaseType.exhale,
-                progression: FixedProgression(Duration(seconds: 4)),
-              ),
-            ],
-            [
-              PhaseSpec(
-                type: PhaseType.inhale,
-                progression: FixedProgression(Duration(seconds: 4)),
-              ),
-              PhaseSpec(
-                type: PhaseType.extendedExhale,
-                progression: FixedProgression(Duration(seconds: 6)),
-              ),
-            ],
-          ],
+          cycleCount: 2,
+          cycleSpec: [_inhale4, _exhale4],
+        ),
+        SessionSegment(
+          label: 'Extended Test',
+          cycleCount: 1,
+          cycleSpec: [_inhale4, _extExhale6],
+        ),
+        SessionSegment(
+          label: 'Extended Test',
+          cycleCount: 2,
+          cycleSpec: [_inhale4, _exhale4],
+        ),
+        SessionSegment(
+          label: 'Extended Test',
+          cycleCount: 1,
+          cycleSpec: [_inhale4, _extExhale6],
         ),
       ],
     );
@@ -571,44 +561,40 @@ void main() {
   });
 
   group('BreathingBloc – Extended Inhale', () {
+    const _inhale4 = PhaseSpec(
+      type: PhaseType.inhale,
+      progression: FixedProgression(Duration(seconds: 4)),
+    );
+    const _exhale4 = PhaseSpec(
+      type: PhaseType.exhale,
+      progression: FixedProgression(Duration(seconds: 4)),
+    );
+    const _extInhale6 = PhaseSpec(
+      type: PhaseType.extendedInhale,
+      progression: FixedProgression(Duration(seconds: 6)),
+    );
     const extInhalePattern = SessionProgram(
       name: 'Extended Inhale Test',
       segments: [
         SessionSegment(
           label: 'Extended Inhale Test',
-          cycleCount: 6,
-          cycleSpecs: [
-            [
-              PhaseSpec(
-                type: PhaseType.inhale,
-                progression: FixedProgression(Duration(seconds: 4)),
-              ),
-              PhaseSpec(
-                type: PhaseType.exhale,
-                progression: FixedProgression(Duration(seconds: 4)),
-              ),
-            ],
-            [
-              PhaseSpec(
-                type: PhaseType.inhale,
-                progression: FixedProgression(Duration(seconds: 4)),
-              ),
-              PhaseSpec(
-                type: PhaseType.exhale,
-                progression: FixedProgression(Duration(seconds: 4)),
-              ),
-            ],
-            [
-              PhaseSpec(
-                type: PhaseType.extendedInhale,
-                progression: FixedProgression(Duration(seconds: 6)),
-              ),
-              PhaseSpec(
-                type: PhaseType.exhale,
-                progression: FixedProgression(Duration(seconds: 4)),
-              ),
-            ],
-          ],
+          cycleCount: 2,
+          cycleSpec: [_inhale4, _exhale4],
+        ),
+        SessionSegment(
+          label: 'Extended Inhale Test',
+          cycleCount: 1,
+          cycleSpec: [_extInhale6, _exhale4],
+        ),
+        SessionSegment(
+          label: 'Extended Inhale Test',
+          cycleCount: 2,
+          cycleSpec: [_inhale4, _exhale4],
+        ),
+        SessionSegment(
+          label: 'Extended Inhale Test',
+          cycleCount: 1,
+          cycleSpec: [_extInhale6, _exhale4],
         ),
       ],
     );
