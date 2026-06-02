@@ -71,21 +71,42 @@ class _BreathingSessionView extends StatelessWidget {
     final spacing = context.bTheme.spacing;
     final programs = context.watch<PatternsBloc>().state.programs;
 
-    return BlocListener<BreathingBloc, BreathingState>(
-      listenWhen: (prev, curr) =>
-          prev.currentPhase != curr.currentPhase || prev.status != curr.status,
-      listener: (context, state) {
-        final audioBloc = context.read<AudioBloc>();
-        if (state.status == SessionStatus.playing) {
-          audioBloc
-            ..add(PlayPhaseVoiceCue(state.currentPhase))
-            ..add(PlayPhaseNoiseCue(state.currentPhase));
-        } else {
-          audioBloc
-            ..add(const StopVoiceCue())
-            ..add(const StopNoiseCue());
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        // Voice: fires at phase change or session status change.
+        BlocListener<BreathingBloc, BreathingState>(
+          listenWhen: (prev, curr) =>
+              prev.currentPhase != curr.currentPhase ||
+              prev.status != curr.status,
+          listener: (context, state) {
+            final audio = context.read<AudioBloc>();
+            if (state.status == SessionStatus.playing) {
+              audio.add(PlayPhaseVoiceCue(state.currentPhase));
+            } else {
+              audio.add(const StopVoiceCue());
+            }
+          },
+        ),
+        // Noise: fires 0.5 s before phase end (crossfade) or on play/stop.
+        BlocListener<BreathingBloc, BreathingState>(
+          listenWhen: (prev, curr) =>
+              (!prev.isNearPhaseEnd && curr.isNearPhaseEnd) ||
+              prev.status != curr.status,
+          listener: (context, state) {
+            final audio = context.read<AudioBloc>();
+            if (state.status == SessionStatus.playing) {
+              if (state.isNearPhaseEnd) {
+                final next = state.nextPhaseType;
+                if (next != null) audio.add(PlayPhaseNoiseCue(next));
+              } else {
+                audio.add(PlayPhaseNoiseCue(state.currentPhase));
+              }
+            } else {
+              audio.add(const StopNoiseCue());
+            }
+          },
+        ),
+      ],
       child: Scaffold(
         body: SafeArea(
           child: Column(

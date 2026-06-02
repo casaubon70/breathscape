@@ -8,10 +8,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:just_audio/just_audio.dart';
 
 class AudioBloc extends Bloc<AudioEvent, AudioState> {
-  AudioBloc({AudioPlayer? voicePlayer, AudioPlayer? noisePlayer})
-    : _voicePlayer = voicePlayer ?? AudioPlayer(),
-      _noisePlayer = noisePlayer ?? AudioPlayer(),
-      super(const AudioState()) {
+  AudioBloc({
+    AudioPlayer? voicePlayer,
+    AudioPlayer? noisePlayerA,
+    AudioPlayer? noisePlayerB,
+  }) : _voicePlayer = voicePlayer ?? AudioPlayer(),
+       _noisePlayerA = noisePlayerA ?? AudioPlayer(),
+       _noisePlayerB = noisePlayerB ?? AudioPlayer(),
+       super(const AudioState()) {
     on<PlayPhaseVoiceCue>(_onPlayPhaseVoiceCue);
     on<StopVoiceCue>(_onStopVoiceCue);
     on<VoiceMuteToggled>(_onVoiceMuteToggled);
@@ -21,19 +25,40 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
   }
 
   final AudioPlayer _voicePlayer;
-  final AudioPlayer _noisePlayer;
+  final AudioPlayer _noisePlayerA;
+  final AudioPlayer _noisePlayerB;
 
-  // Incremented on every noise fade start; lets an older fade abort itself
-  // when a newer one takes over.
-  int _fadeGeneration = 0;
+  // true = A is the current/incoming player, B is outgoing (and vice versa)
+  bool _aIsActive = true;
 
-  static const int _fadeSteps = 10;
-  static const Duration _fadeStepDuration = Duration(milliseconds: 25);
+  // Per-player generation counters — incrementing aborts any ongoing fade loop
+  // for that player without disturbing the other player's concurrent fade.
+  int _genA = 0;
+  int _genB = 0;
+
+  static const int _fadeInSteps = 20;
+  static const Duration _fadeInStepDuration = Duration(milliseconds: 50);
+
+  static const int _fadeOutSteps = 20;
+  static const Duration _fadeOutStepDuration = Duration(milliseconds: 50);
+
+  AudioPlayer get _currentNoisePlayer =>
+      _aIsActive ? _noisePlayerA : _noisePlayerB;
+
+  AudioPlayer get _outgoingNoisePlayer =>
+      _aIsActive ? _noisePlayerB : _noisePlayerA;
+
+  int _getGen(AudioPlayer player) =>
+      identical(player, _noisePlayerA) ? _genA : _genB;
+
+  int _incGen(AudioPlayer player) =>
+      identical(player, _noisePlayerA) ? ++_genA : ++_genB;
 
   @override
   Future<void> close() async {
     await _voicePlayer.dispose();
-    await _noisePlayer.dispose();
+    await _noisePlayerA.dispose();
+    await _noisePlayerB.dispose();
     return super.close();
   }
 
@@ -78,26 +103,49 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     Emitter<AudioState> emit,
   ) async {
     if (state.isNoiseMuted) return;
+
+    // Capture outgoing player before toggling active side
+    final outPlayer = _currentNoisePlayer;
+    final outGen = _incGen(outPlayer);
+
+    _aIsActive = !_aIsActive;
+    final inPlayer = _currentNoisePlayer;
+    final inGen = _incGen(inPlayer);
+
+    // Fade out old player over ~1 s; skip if it was never started
+    if (outPlayer.playing) {
+      unawaited(_fadeOut(outPlayer, outGen));
+    }
+
     final path = NoiseCueMap.assetPath(event.phase);
     if (path == null) return;
 
-    final gen = ++_fadeGeneration;
-    await _noisePlayer.setVolume(0);
-    await _noisePlayer.stop();
-    await _noisePlayer.setLoopMode(LoopMode.one);
-    await _noisePlayer.setAsset(path);
-    unawaited(_noisePlayer.play());
-    unawaited(_fadeIn(_noisePlayer, gen));
+    await inPlayer.setVolume(0);
+    await inPlayer.stop();
+    await inPlayer.setLoopMode(LoopMode.one);
+    await inPlayer.setAsset(path);
+    unawaited(inPlayer.play());
+    unawaited(_fadeIn(inPlayer, inGen));
   }
 
   Future<void> _onStopNoiseCue(
     StopNoiseCue event,
     Emitter<AudioState> emit,
   ) async {
-    final gen = ++_fadeGeneration;
-    await _fadeOut(_noisePlayer, gen);
-    await _noisePlayer.stop();
-    await _noisePlayer.setVolume(1);
+    final outgoing = _outgoingNoisePlayer;
+    final current = _currentNoisePlayer;
+
+    _incGen(outgoing);
+    await outgoing.stop();
+    await outgoing.setVolume(1);
+
+    if (current.playing) {
+      final outGen = _incGen(current);
+      await _fadeOut(current, outGen);
+    } else {
+      await current.stop();
+      await current.setVolume(1);
+    }
   }
 
   Future<void> _onNoiseMuteToggled(
@@ -106,27 +154,42 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
   ) async {
     final muting = !state.isNoiseMuted;
     if (muting) {
-      final gen = ++_fadeGeneration;
-      await _fadeOut(_noisePlayer, gen);
-      await _noisePlayer.stop();
-      await _noisePlayer.setVolume(1);
+      final outgoing = _outgoingNoisePlayer;
+      final current = _currentNoisePlayer;
+
+      _incGen(outgoing);
+      await outgoing.stop();
+      await outgoing.setVolume(1);
+
+      if (current.playing) {
+        final outGen = _incGen(current);
+        await _fadeOut(current, outGen);
+      } else {
+        await current.stop();
+        await current.setVolume(1);
+      }
     }
     emit(state.copyWith(isNoiseMuted: muting));
   }
 
   Future<void> _fadeIn(AudioPlayer player, int gen) async {
-    for (var i = 1; i <= _fadeSteps; i++) {
-      if (_fadeGeneration != gen) return;
-      await player.setVolume(i / _fadeSteps);
-      await Future<void>.delayed(_fadeStepDuration);
+    for (var i = 1; i <= _fadeInSteps; i++) {
+      if (_getGen(player) != gen) return;
+      await player.setVolume(i / _fadeInSteps);
+      await Future<void>.delayed(_fadeInStepDuration);
     }
   }
 
   Future<void> _fadeOut(AudioPlayer player, int gen) async {
-    for (var i = _fadeSteps - 1; i >= 0; i--) {
-      if (_fadeGeneration != gen) return;
-      await player.setVolume(i / _fadeSteps);
-      await Future<void>.delayed(_fadeStepDuration);
+    for (var i = _fadeOutSteps - 1; i >= 0; i--) {
+      if (_getGen(player) != gen) return;
+      await player.setVolume(i / _fadeOutSteps);
+      await Future<void>.delayed(_fadeOutStepDuration);
+    }
+    // Fade completed naturally — stop and reset for future reuse
+    if (_getGen(player) == gen) {
+      await player.stop();
+      await player.setVolume(1);
     }
   }
 }

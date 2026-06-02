@@ -24,6 +24,8 @@ final class BreathingState extends Equatable {
     this.circleBottomOpacity = 0.0,
     this.deepZoneFill = 0.0,
     this.topZoneFill = 0.0,
+    this.nextPhaseType,
+    this.isNearPhaseEnd = false,
   });
 
   final SessionProgram selectedProgram;
@@ -67,6 +69,14 @@ final class BreathingState extends Equatable {
   /// How much of the upper surfaceDim zone has been filled (0.0–1.0).
   final double topZoneFill;
 
+  /// The phase type that follows [currentPhase]; null when [currentPhase] is
+  /// the last phase of the session.
+  final PhaseType? nextPhaseType;
+
+  /// True during the last 500 ms of the current phase, signalling that the
+  /// noise crossfade to [nextPhaseType] should begin.
+  final bool isNearPhaseEnd;
+
   BreathingState copyWith({
     SessionProgram? selectedProgram,
     SessionStatus? status,
@@ -86,6 +96,9 @@ final class BreathingState extends Equatable {
     double? circleBottomOpacity,
     double? deepZoneFill,
     double? topZoneFill,
+    // Nullable field: pass () => value to set, omit to keep current.
+    PhaseType? Function()? nextPhaseType,
+    bool? isNearPhaseEnd,
   }) {
     return BreathingState(
       selectedProgram: selectedProgram ?? this.selectedProgram,
@@ -108,11 +121,15 @@ final class BreathingState extends Equatable {
       circleBottomOpacity: circleBottomOpacity ?? this.circleBottomOpacity,
       deepZoneFill: deepZoneFill ?? this.deepZoneFill,
       topZoneFill: topZoneFill ?? this.topZoneFill,
+      nextPhaseType: nextPhaseType != null
+          ? nextPhaseType()
+          : this.nextPhaseType,
+      isNearPhaseEnd: isNearPhaseEnd ?? this.isNearPhaseEnd,
     );
   }
 
   @override
-  List<Object> get props => [
+  List<Object?> get props => [
     selectedProgram,
     status,
     currentPhase,
@@ -131,5 +148,7 @@ final class BreathingState extends Equatable {
     circleBottomOpacity,
     deepZoneFill,
     topZoneFill,
+    nextPhaseType,
+    isNearPhaseEnd,
   ];
 }

@@ -10,23 +10,39 @@ import 'package:mocktail/mocktail.dart';
 class MockAudioPlayer extends Mock implements AudioPlayer {}
 
 void main() {
-  late MockAudioPlayer mockPlayer;
+  setUpAll(() => registerFallbackValue(LoopMode.off));
+
+  late MockAudioPlayer mockVoicePlayer;
+  late MockAudioPlayer mockNoisePlayerA;
+  late MockAudioPlayer mockNoisePlayerB;
+
+  void stubPlayer(MockAudioPlayer p, {bool playing = false}) {
+    when(() => p.stop()).thenAnswer((_) async {});
+    when(() => p.play()).thenAnswer((_) async {});
+    when(
+      () => p.setAsset(any(), initialPosition: any(named: 'initialPosition')),
+    ).thenAnswer((_) async => null);
+    when(() => p.dispose()).thenAnswer((_) async {});
+    when(() => p.setVolume(any())).thenAnswer((_) async {});
+    when(() => p.setLoopMode(any())).thenAnswer((_) async {});
+    when(() => p.volume).thenReturn(1);
+    when(() => p.playing).thenReturn(playing);
+  }
 
   setUp(() {
-    mockPlayer = MockAudioPlayer();
-    when(() => mockPlayer.stop()).thenAnswer((_) async {});
-    when(() => mockPlayer.play()).thenAnswer((_) async {});
-    when(
-      () => mockPlayer.setAsset(
-        any(),
-        initialPosition: any(named: 'initialPosition'),
-      ),
-    ).thenAnswer((_) async => null);
-    when(() => mockPlayer.dispose()).thenAnswer((_) async {});
+    mockVoicePlayer = MockAudioPlayer();
+    mockNoisePlayerA = MockAudioPlayer();
+    mockNoisePlayerB = MockAudioPlayer();
+    stubPlayer(mockVoicePlayer);
+    stubPlayer(mockNoisePlayerA);
+    stubPlayer(mockNoisePlayerB);
   });
 
-  AudioBloc buildBloc() =>
-      AudioBloc(voicePlayer: mockPlayer, noisePlayer: mockPlayer);
+  AudioBloc buildBloc() => AudioBloc(
+    voicePlayer: mockVoicePlayer,
+    noisePlayerA: mockNoisePlayerA,
+    noisePlayerB: mockNoisePlayerB,
+  );
 
   group('AudioBloc', () {
     test('initial state is AudioState(idle)', () {
@@ -40,11 +56,11 @@ void main() {
         act: (bloc) => bloc.add(const PlayPhaseVoiceCue(PhaseType.inhale)),
         expect: () => [const AudioState(status: AudioStatus.playing)],
         verify: (_) {
-          verify(() => mockPlayer.stop()).called(1);
+          verify(() => mockVoicePlayer.stop()).called(1);
           verify(
-            () => mockPlayer.setAsset('assets/voices/breath_in.mp3'),
+            () => mockVoicePlayer.setAsset('assets/voices/breath_in.mp3'),
           ).called(1);
-          verify(() => mockPlayer.play()).called(1);
+          verify(() => mockVoicePlayer.play()).called(1);
         },
       );
 
@@ -56,7 +72,8 @@ void main() {
         expect: () => [const AudioState(status: AudioStatus.playing)],
         verify: (_) {
           verify(
-            () => mockPlayer.setAsset('assets/voices/breath_out_deeply.mp3'),
+            () =>
+                mockVoicePlayer.setAsset('assets/voices/breath_out_deeply.mp3'),
           ).called(1);
         },
       );
@@ -70,7 +87,7 @@ void main() {
           bloc.add(const PlayPhaseVoiceCue(PhaseType.exhale));
         },
         verify: (_) {
-          verify(() => mockPlayer.stop()).called(2);
+          verify(() => mockVoicePlayer.stop()).called(2);
         },
       );
 
@@ -81,7 +98,7 @@ void main() {
         act: (bloc) => bloc.add(const PlayPhaseVoiceCue(PhaseType.inhale)),
         expect: () => <AudioState>[],
         verify: (_) {
-          verifyNever(() => mockPlayer.play());
+          verifyNever(() => mockVoicePlayer.play());
         },
       );
     });
@@ -94,7 +111,7 @@ void main() {
         act: (bloc) => bloc.add(const StopVoiceCue()),
         expect: () => [const AudioState()],
         verify: (_) {
-          verify(() => mockPlayer.stop()).called(1);
+          verify(() => mockVoicePlayer.stop()).called(1);
         },
       );
     });
@@ -107,7 +124,7 @@ void main() {
         act: (bloc) => bloc.add(const VoiceMuteToggled()),
         expect: () => [const AudioState(isMuted: true)],
         verify: (_) {
-          verify(() => mockPlayer.stop()).called(1);
+          verify(() => mockVoicePlayer.stop()).called(1);
         },
       );
 
@@ -118,8 +135,69 @@ void main() {
         act: (bloc) => bloc.add(const VoiceMuteToggled()),
         expect: () => [const AudioState()],
         verify: (_) {
-          verifyNever(() => mockPlayer.stop());
+          verifyNever(() => mockVoicePlayer.stop());
         },
+      );
+    });
+
+    group('PlayPhaseNoiseCue', () {
+      blocTest<AudioBloc, AudioState>(
+        'plays inhale noise on noisePlayerB (first call uses B as incoming)',
+        build: buildBloc,
+        act: (bloc) => bloc.add(const PlayPhaseNoiseCue(PhaseType.inhale)),
+        verify: (_) {
+          verify(
+            () => mockNoisePlayerB.setAsset('assets/noises/inhale.mp3'),
+          ).called(1);
+          verify(() => mockNoisePlayerB.play()).called(1);
+        },
+      );
+
+      blocTest<AudioBloc, AudioState>(
+        'does not play when noise muted',
+        build: buildBloc,
+        seed: () => const AudioState(isNoiseMuted: true),
+        act: (bloc) => bloc.add(const PlayPhaseNoiseCue(PhaseType.inhale)),
+        verify: (_) {
+          verifyNever(() => mockNoisePlayerA.play());
+          verifyNever(() => mockNoisePlayerB.play());
+        },
+      );
+
+      blocTest<AudioBloc, AudioState>(
+        'fades out previous player if it was playing',
+        build: () {
+          stubPlayer(mockNoisePlayerA, playing: true);
+          return AudioBloc(
+            voicePlayer: mockVoicePlayer,
+            noisePlayerA: mockNoisePlayerA,
+            noisePlayerB: mockNoisePlayerB,
+          );
+        },
+        act: (bloc) => bloc.add(const PlayPhaseNoiseCue(PhaseType.inhale)),
+        verify: (_) {
+          // noisePlayerA (outgoing) receives volume-down calls for fade-out
+          verify(
+            () => mockNoisePlayerA.setVolume(any()),
+          ).called(greaterThan(0));
+        },
+      );
+    });
+
+    group('NoiseMuteToggled', () {
+      blocTest<AudioBloc, AudioState>(
+        'emits isNoiseMuted=true when currently unmuted',
+        build: buildBloc,
+        act: (bloc) => bloc.add(const NoiseMuteToggled()),
+        expect: () => [const AudioState(isNoiseMuted: true)],
+      );
+
+      blocTest<AudioBloc, AudioState>(
+        'emits isNoiseMuted=false when currently muted',
+        build: buildBloc,
+        seed: () => const AudioState(isNoiseMuted: true),
+        act: (bloc) => bloc.add(const NoiseMuteToggled()),
+        expect: () => [const AudioState()],
       );
     });
   });

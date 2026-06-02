@@ -118,6 +118,8 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
           status: SessionStatus.playing,
           currentPhase: _timeline.cycles.first.phases.first.type,
           phaseSecondsRemaining: _secondsRemaining(),
+          nextPhaseType: _nextPhaseType,
+          isNearPhaseEnd: false,
         ),
       );
     } else {
@@ -216,6 +218,8 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
           circleOpacity: _circleOpacityForPhase(next.type, 0),
           circleBottomScale: _circleBottomScaleForPhase(next.type, 0),
           circleBottomOpacity: _circleBottomOpacityForPhase(next.type, 0),
+          nextPhaseType: _nextPhaseType,
+          isNearPhaseEnd: false,
         ),
       );
     } else if (_absCycle + 1 < _timeline.cycles.length) {
@@ -235,6 +239,8 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
           circleOpacity: _circleOpacityForPhase(next.type, 0),
           circleBottomScale: _circleBottomScaleForPhase(next.type, 0),
           circleBottomOpacity: _circleBottomOpacityForPhase(next.type, 0),
+          nextPhaseType: _nextPhaseType,
+          isNearPhaseEnd: false,
         ),
       );
     } else {
@@ -248,6 +254,8 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
           deepZoneFill: 0,
           topZoneFill: 0,
           sessionSecondsRemaining: 0,
+          nextPhaseType: () => null,
+          isNearPhaseEnd: false,
         ),
       );
     }
@@ -289,6 +297,8 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
             deepZoneFill: 0,
             topZoneFill: 0,
             sessionSecondsRemaining: 0,
+            nextPhaseType: () => null,
+            isNearPhaseEnd: false,
           ),
         );
         return;
@@ -320,6 +330,8 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
           currentPhase.type,
           progress,
         ),
+        nextPhaseType: _nextPhaseType,
+        isNearPhaseEnd: _isNearPhaseEnd(),
       ),
     );
   }
@@ -343,6 +355,22 @@ class BreathingBloc extends Bloc<BreathingEvent, BreathingState> {
     } else if (endingPhase == PhaseType.exhale) {
       _startFromDeepTop = false;
     }
+  }
+
+  PhaseType? _nextPhaseType() {
+    final currentCyclePhases = _timeline.cycles[_absCycle].phases;
+    if (_phaseIndex + 1 < currentCyclePhases.length) {
+      return currentCyclePhases[_phaseIndex + 1].type;
+    } else if (_absCycle + 1 < _timeline.cycles.length) {
+      return _timeline.cycles[_absCycle + 1].phases.first.type;
+    }
+    return null;
+  }
+
+  bool _isNearPhaseEnd() {
+    final phase = _timeline.cycles[_absCycle].phases[_phaseIndex];
+    final remaining = phase.duration - _phaseAccumulated;
+    return remaining.inMilliseconds <= 500;
   }
 
   int _secondsRemaining() {
