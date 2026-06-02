@@ -49,4 +49,30 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get voiceCuesOff => 'Sprachansagen aus';
+
+  @override
+  String get disclaimerTitle => 'Wichtiger Hinweis';
+
+  @override
+  String get disclaimerIntro =>
+      'Breathscape ist eine App zur Unterstützung von Atemübungen für gesunde Erwachsene. Sie ersetzt keine ärztliche Beratung, Diagnose oder Behandlung.';
+
+  @override
+  String get disclaimerBullet1 =>
+      'Nutze diese App nicht während du Auto fährst, Maschinen bedienst oder dich in einer anderen sicherheitskritischen Situation befindest.';
+
+  @override
+  String get disclaimerBullet2 =>
+      'Atemtechniken können Schwindel oder Benommenheit verursachen. Führe Übungen immer in einer sicheren, sitzenden oder liegenden Position durch.';
+
+  @override
+  String get disclaimerBullet3 =>
+      'Bei bestehenden Erkrankungen – insbesondere Herz-Kreislauf-Erkrankungen, Lungenerkrankungen, psychischen Erkrankungen oder Schwangerschaft – sprich vor der Nutzung mit deiner Ärztin oder deinem Arzt.';
+
+  @override
+  String get disclaimerBullet4 =>
+      'Die Nutzung erfolgt auf eigene Verantwortung.';
+
+  @override
+  String get disclaimerAcceptButton => 'Ich stimme zu';
 }

@@ -69,5 +69,40 @@
   "voiceCuesOff": "Voice cues off",
   "@voiceCuesOff": {
     "description": "Tooltip when voice cues are muted"
+  },
+
+  "disclaimerTitle": "Important Notice",
+  "@disclaimerTitle": {
+    "description": "Title of the disclaimer screen"
+  },
+
+  "disclaimerIntro": "Breathscape is an app to support breathing exercises for healthy adults. It is not a medical device and does not provide medical advice, diagnosis, or treatment.",
+  "@disclaimerIntro": {
+    "description": "Introductory paragraph of the disclaimer"
+  },
+
+  "disclaimerBullet1": "Do not use this app while driving, operating machinery, or in any situation where reduced alertness could cause harm.",
+  "@disclaimerBullet1": {
+    "description": "Disclaimer bullet point: no use in safety-critical situations"
+  },
+
+  "disclaimerBullet2": "Breathing exercises may cause dizziness or lightheadedness. Always practise in a safe, seated or lying position.",
+  "@disclaimerBullet2": {
+    "description": "Disclaimer bullet point: dizziness warning"
+  },
+
+  "disclaimerBullet3": "If you have any medical condition — including cardiovascular disease, respiratory conditions, mental health conditions, or if you are pregnant — consult a qualified healthcare professional before use.",
+  "@disclaimerBullet3": {
+    "description": "Disclaimer bullet point: consult doctor"
+  },
+
+  "disclaimerBullet4": "Use at your own risk.",
+  "@disclaimerBullet4": {
+    "description": "Disclaimer bullet point: own risk"
+  },
+
+  "disclaimerAcceptButton": "I Agree",
+  "@disclaimerAcceptButton": {
+    "description": "Label for the disclaimer accept button"
   }
 }

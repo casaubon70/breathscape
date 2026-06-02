@@ -181,6 +181,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Voice cues off'**
   String get voiceCuesOff;
+
+  /// Title of the disclaimer screen
+  ///
+  /// In en, this message translates to:
+  /// **'Important Notice'**
+  String get disclaimerTitle;
+
+  /// Introductory paragraph of the disclaimer
+  ///
+  /// In en, this message translates to:
+  /// **'Breathscape is an app to support breathing exercises for healthy adults. It is not a medical device and does not provide medical advice, diagnosis, or treatment.'**
+  String get disclaimerIntro;
+
+  /// Disclaimer bullet point: no use in safety-critical situations
+  ///
+  /// In en, this message translates to:
+  /// **'Do not use this app while driving, operating machinery, or in any situation where reduced alertness could cause harm.'**
+  String get disclaimerBullet1;
+
+  /// Disclaimer bullet point: dizziness warning
+  ///
+  /// In en, this message translates to:
+  /// **'Breathing exercises may cause dizziness or lightheadedness. Always practise in a safe, seated or lying position.'**
+  String get disclaimerBullet2;
+
+  /// Disclaimer bullet point: consult doctor
+  ///
+  /// In en, this message translates to:
+  /// **'If you have any medical condition — including cardiovascular disease, respiratory conditions, mental health conditions, or if you are pregnant — consult a qualified healthcare professional before use.'**
+  String get disclaimerBullet3;
+
+  /// Disclaimer bullet point: own risk
+  ///
+  /// In en, this message translates to:
+  /// **'Use at your own risk.'**
+  String get disclaimerBullet4;
+
+  /// Label for the disclaimer accept button
+  ///
+  /// In en, this message translates to:
+  /// **'I Agree'**
+  String get disclaimerAcceptButton;
 }
 
 class _AppLocalizationsDelegate

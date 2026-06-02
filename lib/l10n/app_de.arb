@@ -18,5 +18,13 @@
   "sessionTimerLabel": "ZEIT",
 
   "voiceCuesOn": "Sprachansagen an",
-  "voiceCuesOff": "Sprachansagen aus"
+  "voiceCuesOff": "Sprachansagen aus",
+
+  "disclaimerTitle": "Wichtiger Hinweis",
+  "disclaimerIntro": "Breathscape ist eine App zur Unterstützung von Atemübungen für gesunde Erwachsene. Sie ersetzt keine ärztliche Beratung, Diagnose oder Behandlung.",
+  "disclaimerBullet1": "Nutze diese App nicht während du Auto fährst, Maschinen bedienst oder dich in einer anderen sicherheitskritischen Situation befindest.",
+  "disclaimerBullet2": "Atemtechniken können Schwindel oder Benommenheit verursachen. Führe Übungen immer in einer sicheren, sitzenden oder liegenden Position durch.",
+  "disclaimerBullet3": "Bei bestehenden Erkrankungen – insbesondere Herz-Kreislauf-Erkrankungen, Lungenerkrankungen, psychischen Erkrankungen oder Schwangerschaft – sprich vor der Nutzung mit deiner Ärztin oder deinem Arzt.",
+  "disclaimerBullet4": "Die Nutzung erfolgt auf eigene Verantwortung.",
+  "disclaimerAcceptButton": "Ich stimme zu"
 }
