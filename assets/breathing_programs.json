@@ -97,6 +97,36 @@
       ]
     },
     {
+      "name": "Deep Flow",
+      "segments": [
+        {
+          "label": "Warm Up",
+          "cycleCount": 3,
+          "cycleSpec": [
+            {"type": "inhale", "progression": {"kind": "fixed", "seconds": 4}},
+            {"type": "exhale", "progression": {"kind": "fixed", "seconds": 5}}
+          ]
+        },
+        {
+          "label": "Deep Flow",
+          "cycleCount": 21,
+          "cycleSpec": [
+            {"type": "inhale",          "progression": {"kind": "fixed", "seconds": 4}},
+            {"type": "exhale",          "progression": {"kind": "fixed", "seconds": 6}},
+            {"type": "extended_exhale", "progression": {"kind": "fixed", "seconds": 8}, "interval": 5}
+          ]
+        },
+        {
+          "label": "Cool Down",
+          "cycleCount": 3,
+          "cycleSpec": [
+            {"type": "inhale", "progression": {"kind": "fixed", "seconds": 4}},
+            {"type": "exhale", "progression": {"kind": "fixed", "seconds": 6}}
+          ]
+        }
+      ]
+    },
+    {
       "name": "Progressive Hold",
       "segments": [
         {

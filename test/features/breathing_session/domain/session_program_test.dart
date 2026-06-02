@@ -53,6 +53,29 @@ void main() {
       );
       expect(PhaseSpec.fromJson(spec.toJson()), spec);
     });
+
+    test('fromJson reads interval', () {
+      final spec = PhaseSpec.fromJson(const {
+        'type': 'extended_exhale',
+        'progression': {'kind': 'fixed', 'seconds': 8},
+        'interval': 5,
+      });
+      expect(spec.interval, 5);
+    });
+
+    test('toJson omits null interval', () {
+      expect(_inhale4.toJson().containsKey('interval'), isFalse);
+    });
+
+    test('toJson includes set interval and round-trips', () {
+      const spec = PhaseSpec(
+        type: PhaseType.extendedExhale,
+        progression: FixedProgression(Duration(seconds: 8)),
+        interval: 5,
+      );
+      expect(spec.toJson()['interval'], 5);
+      expect(PhaseSpec.fromJson(spec.toJson()), spec);
+    });
   });
 
   // ── SessionSegment ─────────────────────────────────────────────────────────
@@ -150,6 +173,135 @@ void main() {
         jsonDecode(jsonEncode(json)) as Map<String, dynamic>,
       );
       expect(decoded, program);
+    });
+  });
+
+  // ── interval phases ────────────────────────────────────────────────────────
+
+  group('interval phases', () {
+    const inhale4 = PhaseSpec(
+      type: PhaseType.inhale,
+      progression: FixedProgression(Duration(seconds: 4)),
+    );
+    const exhale6 = PhaseSpec(
+      type: PhaseType.exhale,
+      progression: FixedProgression(Duration(seconds: 6)),
+    );
+    const extExhale8interval5 = PhaseSpec(
+      type: PhaseType.extendedExhale,
+      progression: FixedProgression(Duration(seconds: 8)),
+      interval: 5,
+    );
+
+    SessionProgram makeProgram(int cycleCount) => SessionProgram(
+      name: 'Test',
+      segments: [
+        SessionSegment(
+          label: 'Seg',
+          cycleCount: cycleCount,
+          cycleSpec: const [inhale4, exhale6, extExhale8interval5],
+        ),
+      ],
+    );
+
+    test('non-interval cycles contain inhale + exhale', () {
+      final timeline = makeProgram(11).resolve();
+      for (final i in [1, 2, 3, 4, 6, 7, 8, 9]) {
+        final types = timeline.cycles[i].phases.map((p) => p.type).toList();
+        expect(types, [PhaseType.inhale, PhaseType.exhale]);
+      }
+    });
+
+    test('interval cycles (1, 6, 11) contain inhale + extendedExhale', () {
+      final timeline = makeProgram(11).resolve();
+      for (final i in [0, 5, 10]) {
+        final types = timeline.cycles[i].phases.map((p) => p.type).toList();
+        expect(types, [PhaseType.inhale, PhaseType.extendedExhale]);
+      }
+    });
+
+    // interval=5, cycleCount=3: only cycle 1 (index 0) is extended
+    test('first cycle extended, rest normal if cycleCount < 2*interval', () {
+      final timeline = makeProgram(3).resolve();
+      final firstTypes = timeline.cycles[0].phases.map((p) => p.type).toList();
+      expect(firstTypes, [PhaseType.inhale, PhaseType.extendedExhale]);
+      for (final i in [1, 2]) {
+        final types = timeline.cycles[i].phases.map((p) => p.type).toList();
+        expect(types, [PhaseType.inhale, PhaseType.exhale]);
+      }
+    });
+
+    test('interval:1 means every cycle is extended', () {
+      const seg = SessionSegment(
+        label: 'S',
+        cycleCount: 4,
+        cycleSpec: [
+          inhale4,
+          exhale6,
+          PhaseSpec(
+            type: PhaseType.extendedExhale,
+            progression: FixedProgression(Duration(seconds: 8)),
+            interval: 1,
+          ),
+        ],
+      );
+      final timeline = const SessionProgram(
+        name: 'T',
+        segments: [seg],
+      ).resolve();
+      for (final cycle in timeline.cycles) {
+        final types = cycle.phases.map((p) => p.type).toList();
+        expect(types, [PhaseType.inhale, PhaseType.extendedExhale]);
+      }
+    });
+
+    test('extended fires alone when no base phase in spec', () {
+      const seg = SessionSegment(
+        label: 'S',
+        cycleCount: 5,
+        cycleSpec: [inhale4, extExhale8interval5],
+      );
+      final timeline = const SessionProgram(
+        name: 'T',
+        segments: [seg],
+      ).resolve();
+      final firstTypes = timeline.cycles[0].phases.map((p) => p.type).toList();
+      expect(firstTypes, [PhaseType.inhale, PhaseType.extendedExhale]);
+      for (var i = 1; i < 5; i++) {
+        final types = timeline.cycles[i].phases.map((p) => p.type).toList();
+        expect(types, [PhaseType.inhale]);
+      }
+    });
+
+    test('extended_inhale replaces inhale symmetrically', () {
+      const seg = SessionSegment(
+        label: 'S',
+        cycleCount: 6,
+        cycleSpec: [
+          PhaseSpec(
+            type: PhaseType.inhale,
+            progression: FixedProgression(Duration(seconds: 4)),
+          ),
+          PhaseSpec(
+            type: PhaseType.extendedInhale,
+            progression: FixedProgression(Duration(seconds: 6)),
+            interval: 3,
+          ),
+          exhale6,
+        ],
+      );
+      final timeline = const SessionProgram(
+        name: 'T',
+        segments: [seg],
+      ).resolve();
+      for (final i in [1, 2, 4, 5]) {
+        final types = timeline.cycles[i].phases.map((p) => p.type).toList();
+        expect(types, [PhaseType.inhale, PhaseType.exhale]);
+      }
+      for (final i in [0, 3]) {
+        final types = timeline.cycles[i].phases.map((p) => p.type).toList();
+        expect(types, [PhaseType.extendedInhale, PhaseType.exhale]);
+      }
     });
   });
 
