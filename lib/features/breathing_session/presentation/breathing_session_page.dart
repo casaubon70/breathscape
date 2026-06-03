@@ -142,7 +142,10 @@ class _BreathingSessionView extends StatelessWidget {
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final dotsAreaHeight = CycleDotRow.totalHeight + spacing.m;
+                    final dotsAreaHeight =
+                        CycleDotRow.totalHeight +
+                        CycleDotRow.paginatorHeight +
+                        spacing.m;
                     final isExpanded = Breakpoints.isExpanded(context);
                     final animHeight =
                         ((constraints.maxHeight - dotsAreaHeight) * 0.40).clamp(

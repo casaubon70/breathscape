@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "breathing_programs.schema.json",
+  "title": "Breathing Programs",
+  "type": "object",
+  "required": ["programs"],
+  "additionalProperties": false,
+  "properties": {
+    "programs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/program" }
+    }
+  },
+  "$defs": {
+    "program": {
+      "type": "object",
+      "required": ["name", "segments"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "segments": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/segment" }
+        }
+      }
+    },
+    "segment": {
+      "type": "object",
+      "required": ["label", "cycleCount", "cycleSpec"],
+      "additionalProperties": false,
+      "properties": {
+        "label":      { "type": "string",  "minLength": 1 },
+        "cycleCount": { "type": "integer", "minimum": 1, "maximum": 50 },
+        "cycleSpec": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/phase" }
+        }
+      }
+    },
+    "phase": {
+      "type": "object",
+      "required": ["type", "progression"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["inhale", "exhale", "hold_in", "hold_out", "extended_exhale"]
+        },
+        "progression": { "$ref": "#/$defs/progression" },
+        "interval": { "type": "integer", "minimum": 1 }
+      },
+      "if": {
+        "required": ["type"],
+        "properties": { "type": { "const": "extended_exhale" } }
+      },
+      "then": { "required": ["interval"] }
+    },
+    "progression": {
+      "oneOf": [
+        { "$ref": "#/$defs/fixedProgression" },
+        { "$ref": "#/$defs/linearProgression" }
+      ]
+    },
+    "fixedProgression": {
+      "type": "object",
+      "required": ["kind", "seconds"],
+      "additionalProperties": false,
+      "properties": {
+        "kind":    { "const": "fixed" },
+        "seconds": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "linearProgression": {
+      "type": "object",
+      "required": ["kind", "startSeconds", "stepSeconds", "maxSeconds"],
+      "additionalProperties": false,
+      "properties": {
+        "kind":         { "const": "linear" },
+        "startSeconds": { "type": "number", "exclusiveMinimum": 0 },
+        "stepSeconds":  { "type": "number", "exclusiveMinimum": 0 },
+        "maxSeconds":   { "type": "number", "exclusiveMinimum": 0 }
+      }
+    }
+  }
+}

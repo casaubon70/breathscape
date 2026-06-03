@@ -47,7 +47,10 @@ final class SessionSegment extends Equatable {
     required this.label,
     required this.cycleCount,
     required this.cycleSpec,
-  });
+  }) : assert(
+         cycleCount >= 1 && cycleCount <= 50,
+         'cycleCount must be between 1 and 50, got $cycleCount',
+       );
 
   factory SessionSegment.fromJson(Map<String, dynamic> json) {
     final rawCycleSpec = json['cycleSpec'] as List<dynamic>;
