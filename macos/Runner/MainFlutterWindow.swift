@@ -10,9 +10,8 @@ class MainFlutterWindow: NSWindow {
 
     RegisterGeneratedPlugins(registry: flutterViewController)
 
-    if let registrar = flutterViewController.registrar(forPlugin: "ICloudKV") {
-      ICloudKVChannel.register(messenger: registrar.messenger)
-    }
+    let registrar = flutterViewController.registrar(forPlugin: "ICloudKV")
+    ICloudKVChannel.register(messenger: registrar.messenger)
 
     super.awakeFromNib()
   }
