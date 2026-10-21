@@ -14,7 +14,7 @@ class ProgramsRepository {
     for (final entry in list.cast<Map<String, dynamic>>()) {
       try {
         programs.add(SessionProgram.fromJson(entry));
-      } catch (_) {
+      } on Object catch (_) {
         // Skip any program that fails to parse (e.g. unknown progression kind)
         // so a single malformed entry does not prevent the rest from loading.
       }

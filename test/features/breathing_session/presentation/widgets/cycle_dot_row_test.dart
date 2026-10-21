@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// ── helpers ──────────────────────────────────────────────────────────────────
 
 Widget _wrap(Widget child) => MaterialApp(
   theme: darkOceanTheme.toThemeData(),
@@ -30,7 +30,7 @@ SessionSegment _named(String label, int cycleCount) =>
 
 Finder _paginatorDot(int index) => find.byKey(Key('cycle_dot_page_$index'));
 
-// ── tests ─────────────────────────────────────────────────────────────────────
+// ── tests ────────────────────────────────────────────────────────────────────
 
 void main() {
   group('CycleDotRow', () {

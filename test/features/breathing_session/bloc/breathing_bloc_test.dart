@@ -299,15 +299,15 @@ void main() {
   });
 
   group('BreathingBloc – Extended Exhale', () {
-    const _inhale4 = PhaseSpec(
+    const inhale4 = PhaseSpec(
       type: PhaseType.inhale,
       progression: FixedProgression(Duration(seconds: 4)),
     );
-    const _exhale4 = PhaseSpec(
+    const exhale4 = PhaseSpec(
       type: PhaseType.exhale,
       progression: FixedProgression(Duration(seconds: 4)),
     );
-    const _extExhale6 = PhaseSpec(
+    const extExhale6 = PhaseSpec(
       type: PhaseType.extendedExhale,
       progression: FixedProgression(Duration(seconds: 6)),
     );
@@ -317,22 +317,22 @@ void main() {
         SessionSegment(
           label: 'Extended Test',
           cycleCount: 2,
-          cycleSpec: [_inhale4, _exhale4],
+          cycleSpec: [inhale4, exhale4],
         ),
         SessionSegment(
           label: 'Extended Test',
           cycleCount: 1,
-          cycleSpec: [_inhale4, _extExhale6],
+          cycleSpec: [inhale4, extExhale6],
         ),
         SessionSegment(
           label: 'Extended Test',
           cycleCount: 2,
-          cycleSpec: [_inhale4, _exhale4],
+          cycleSpec: [inhale4, exhale4],
         ),
         SessionSegment(
           label: 'Extended Test',
           cycleCount: 1,
-          cycleSpec: [_inhale4, _extExhale6],
+          cycleSpec: [inhale4, extExhale6],
         ),
       ],
     );
@@ -561,15 +561,15 @@ void main() {
   });
 
   group('BreathingBloc – Extended Inhale', () {
-    const _inhale4 = PhaseSpec(
+    const inhale4 = PhaseSpec(
       type: PhaseType.inhale,
       progression: FixedProgression(Duration(seconds: 4)),
     );
-    const _exhale4 = PhaseSpec(
+    const exhale4 = PhaseSpec(
       type: PhaseType.exhale,
       progression: FixedProgression(Duration(seconds: 4)),
     );
-    const _extInhale6 = PhaseSpec(
+    const extInhale6 = PhaseSpec(
       type: PhaseType.extendedInhale,
       progression: FixedProgression(Duration(seconds: 6)),
     );
@@ -579,22 +579,22 @@ void main() {
         SessionSegment(
           label: 'Extended Inhale Test',
           cycleCount: 2,
-          cycleSpec: [_inhale4, _exhale4],
+          cycleSpec: [inhale4, exhale4],
         ),
         SessionSegment(
           label: 'Extended Inhale Test',
           cycleCount: 1,
-          cycleSpec: [_extInhale6, _exhale4],
+          cycleSpec: [extInhale6, exhale4],
         ),
         SessionSegment(
           label: 'Extended Inhale Test',
           cycleCount: 2,
-          cycleSpec: [_inhale4, _exhale4],
+          cycleSpec: [inhale4, exhale4],
         ),
         SessionSegment(
           label: 'Extended Inhale Test',
           cycleCount: 1,
-          cycleSpec: [_extInhale6, _exhale4],
+          cycleSpec: [extInhale6, exhale4],
         ),
       ],
     );

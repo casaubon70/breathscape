@@ -59,7 +59,7 @@ class AudioBloc extends Bloc<AudioEvent, AudioState> {
     await _voicePlayer.dispose();
     await _noisePlayerA.dispose();
     await _noisePlayerB.dispose();
-    return super.close();
+    await super.close();
   }
 
   Future<void> _onPlayPhaseVoiceCue(

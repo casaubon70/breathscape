@@ -50,7 +50,7 @@ class PatternPickerPage extends StatelessWidget {
     return ListView.separated(
       padding: EdgeInsets.symmetric(vertical: spacing.m),
       itemCount: programs.length,
-      separatorBuilder: (_, __) => Divider(
+      separatorBuilder: (_, _) => Divider(
         color: colors.surfaceDim,
         height: 1,
         indent: spacing.l,

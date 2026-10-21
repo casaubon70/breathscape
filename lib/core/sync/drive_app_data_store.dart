@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:breathscape/core/sync/synced_key_value_store.dart';
@@ -60,7 +61,7 @@ class DriveAppDataStore implements SyncedKeyValueStore {
       (_) => _writeNow(key, value),
     );
     _ongoing[key] = next.whenComplete(() {
-      if (_ongoing[key] == next) _ongoing.remove(key);
+      if (_ongoing[key] == next) unawaited(_ongoing.remove(key));
     });
     return _ongoing[key]!;
   }
@@ -82,7 +83,7 @@ class DriveAppDataStore implements SyncedKeyValueStore {
   /// Returns the Drive file id for [key] in the appDataFolder, or null.
   Future<String?> _fileId(String key, String token) async {
     // Escape single quotes in the filename for the Drive query string.
-    final escapedName = _fileName(key).replaceAll("'", "\\'");
+    final escapedName = _fileName(key).replaceAll("'", r"\'");
     final uri = Uri.parse(_filesUrl).replace(
       queryParameters: {
         'spaces': 'appDataFolder',
@@ -121,7 +122,7 @@ class DriveAppDataStore implements SyncedKeyValueStore {
     final streamed = await _client.send(request);
     // Ignore non-2xx responses: sync is best-effort; local store is the source
     // of truth and the remote will re-sync on the next app launch.
-    streamed.stream.drain<void>();
+    unawaited(streamed.stream.drain<void>());
   }
 
   Future<void> _update(String id, String value, String token) async {

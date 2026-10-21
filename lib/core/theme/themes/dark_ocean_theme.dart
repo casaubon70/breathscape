@@ -4,7 +4,7 @@ import 'package:breathscape/core/theme/data/app_spacing.dart';
 import 'package:breathscape/core/theme/data/app_typography.dart';
 import 'package:flutter/material.dart';
 
-const _signal = Colors.amber;
+const MaterialColor _signal = Colors.amber;
 
 const darkOceanTheme = BreathscapeTheme(
   id: 'dark_ocean',

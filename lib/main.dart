@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:breathscape/core/theme/bloc/theme_bloc.dart';
 import 'package:breathscape/core/theme/bloc/theme_state.dart';
 import 'package:breathscape/features/breathing_session/presentation/breathing_session_page.dart';
@@ -85,8 +87,10 @@ class _OrientationWidgetState extends State<_OrientationWidget> {
     final shortestSide = MediaQuery.sizeOf(context).shortestSide;
     final isIPhone =
         defaultTargetPlatform == TargetPlatform.iOS && shortestSide < 600;
-    SystemChrome.setPreferredOrientations(
-      isIPhone ? [DeviceOrientation.portraitUp] : DeviceOrientation.values,
+    unawaited(
+      SystemChrome.setPreferredOrientations(
+        isIPhone ? [DeviceOrientation.portraitUp] : DeviceOrientation.values,
+      ),
     );
   }
 

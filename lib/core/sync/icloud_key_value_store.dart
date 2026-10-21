@@ -24,7 +24,7 @@ class ICloudKeyValueStore implements SyncedKeyValueStore {
   static final Stream<Object?> _rawChanges = _changes.receiveBroadcastStream();
 
   @override
-  Future<String?> read(String key) async {
+  Future<String?> read(String key) {
     return _methods.invokeMethod<String>('get', {'key': key});
   }
 
@@ -37,7 +37,7 @@ class ICloudKeyValueStore implements SyncedKeyValueStore {
   Stream<String> watch(String key) {
     return _rawChanges
         .where((event) => event == key)
-        .asyncMap<String?>((_) async => read(key))
+        .asyncMap<String?>((_) => read(key))
         // Drop null (key missing / transient read failure) but pass through
         // empty string, which is a legitimate stored value.
         .where((v) => v != null)

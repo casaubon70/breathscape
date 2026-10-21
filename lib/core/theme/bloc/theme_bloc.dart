@@ -1,3 +1,4 @@
+import 'package:breathscape/core/theme/app_theme.dart';
 import 'package:breathscape/core/theme/bloc/theme_event.dart';
 import 'package:breathscape/core/theme/bloc/theme_state.dart';
 import 'package:breathscape/core/theme/themes/dark_ocean_theme.dart';
@@ -8,7 +9,9 @@ final class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
     on<ThemeChanged>(_onThemeChanged);
   }
 
-  static const _themes = {'dark_ocean': darkOceanTheme};
+  static const Map<String, BreathscapeTheme> _themes = {
+    'dark_ocean': darkOceanTheme,
+  };
 
   void _onThemeChanged(ThemeChanged event, Emitter<ThemeState> emit) {
     final theme = _themes[event.themeId];
