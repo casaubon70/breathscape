@@ -28,8 +28,8 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-  cupertino_icons: ^1.0.8
-  equatable: ^2.0.5
+  cupertino_icons: ^2.0.0
+  equatable: ^3.0.0
   flutter:
     sdk: flutter
   flutter_bloc: ^9.0.0
@@ -39,7 +39,7 @@ dependencies:
   google_sign_in: ^7.2.0
   http: ^1.6.0
   intl: ^0.20.2
-  just_audio: ^0.9.46
+  just_audio: ^0.10.6
   shared_preferences: ^2.5.5
   yaml: ^3.1.2
 
@@ -48,7 +48,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   mocktail: ^1.0.0
-  very_good_analysis: ^7.0.0
+  very_good_analysis: ^11.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

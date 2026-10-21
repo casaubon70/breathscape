@@ -113,7 +113,7 @@ final class SomethingPressed extends FeatureEvent {
 ```yaml
 dependencies:
   flutter_bloc: ^9.0.0
-  equatable: ^2.0.0
+  equatable: ^3.0.0
 
 dev_dependencies:
   bloc_test: ^10.0.0
@@ -193,7 +193,7 @@ von der UI-Geste bis zur sichtbaren Reaktion abdeckt.
 
 ```yaml
 dev_dependencies:
-  very_good_analysis: ^7.0.0
+  very_good_analysis: ^11.0.0
 ```
 
 `analysis_options.yaml`:
