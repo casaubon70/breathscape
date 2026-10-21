@@ -99,6 +99,34 @@ void main() {
     });
   });
 
+  group('BreathingSessionPage – Layout', () {
+    const sizes = [
+      Size(800, 600),
+      Size(800, 520),
+      Size(800, 450),
+      Size(1200, 400),
+      Size(400, 500),
+      Size(390, 844),
+      Size(1440, 900),
+    ];
+
+    for (final size in sizes) {
+      testWidgets(
+        'kein Overflow bei ${size.width.toInt()}x${size.height.toInt()}',
+        (tester) async {
+          await tester.binding.setSurfaceSize(size);
+          addTearDown(() => tester.binding.setSurfaceSize(null));
+
+          await tester.pumpWidget(_buildPage());
+          await tester.pump();
+
+          expect(tester.takeException(), isNull);
+          expect(find.byType(BreathingAnimationWidget), findsOneWidget);
+        },
+      );
+    }
+  });
+
   group('PlaybackControls – Completed State', () {
     Widget buildControls(SessionStatus status) => MaterialApp(
       theme: darkOceanTheme.toThemeData(),

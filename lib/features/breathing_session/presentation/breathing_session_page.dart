@@ -156,10 +156,16 @@ class _BreathingSessionView extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Center(
-                            child: _buildSessionArea(
-                              context,
-                              constraints,
-                              animHeight,
+                            // animHeight is a heuristic; on short windows the
+                            // labels + circles + bar exceed the space, so
+                            // scale down instead of overflowing.
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: _buildSessionArea(
+                                context,
+                                constraints,
+                                animHeight,
+                              ),
                             ),
                           ),
                         ),
